@@ -1,5 +1,5 @@
 {
-  "name": "lib.ts",
+  "name": "easylib.ts",
   "version": "0.1.0",
   "description": "The foundational library for bulletproof TypeScript: Java-style Collections, Maps, Streams, Functionals, Optional, and Result types for safer type-driven development.",
   "keywords": [
@@ -14,6 +14,17 @@
     "fluent-api",
     "monad"
   ],
+  "homepage": "https://github.com/christianbraghette/lib.ts#readme",
+  "bugs": {
+    "url": "https://github.com/christianbraghette/lib.ts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/christianbraghette/lib.ts.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Christian Braghette",
+  "type": "commonjs",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -41,9 +52,6 @@
       "types": "./dist/utils.d.ts"
     }
   },
-  "license": "Apache-2.0",
-  "author": "Christian Braghette",
-  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "prepare": "npm run build",

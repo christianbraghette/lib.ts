@@ -1,5 +1,6 @@
 import { SortedArrayList, SortedQueue } from "./collections";
 import { Comparator, Functional, Supplier } from "./functional";
+import { FunctionalObject, IterableObject } from "./objects";
 
 export { Optional } from "./optional";
 export { Result } from "./result";
@@ -59,12 +60,13 @@ class StateLockedError extends Error {
     }
 }
 
-export class Transaction<T, O = never> {
+export class Transaction<T, O = never> extends IterableObject<Transaction<T, O>> implements FunctionalObject {
     #lastCommmit?: Transaction<O>;
     #source: T;
     #locked = false;
 
     constructor(obj: T) {
+        super();
         this.#source = obj;
     }
 
@@ -107,5 +109,13 @@ export class Transaction<T, O = never> {
 
     public rollbak(): Transaction<O> | undefined {
         return this.#lastCommmit;
+    }
+
+    public pipe(): Supplier<this> {
+        return () => this;
+    }
+
+    public *[Symbol.iterator](): IterableIterator<this> {
+        yield this;
     }
 }

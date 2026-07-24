@@ -2,11 +2,11 @@ import { Collection, Stack } from "./collections";
 import { Dictionary } from "./dictionary";
 import { BiConsumer, BiFunctional, BiPredicate, Comparator, Executor, Functional, Supplier, TriFunctional, UnaryOperator } from "./functional";
 import { ArrayList, SortedArrayList } from "./list";
-import { HashMap, TreeMap } from "./map";
+import { CacheMap, HashMap, TreeMap } from "./map";
 import { AsyncIterableObject, FunctionalObject } from "./objects";
 import { Optional, Some } from "./optional";
 import { PriorityQueue } from "./queue";
-import { HashSet } from "./set";
+import { CacheSet, HashSet, TreeSet } from "./set";
 
 
 export type Collector<T, C> = Functional<Iterable<T>, C>;
@@ -28,12 +28,24 @@ export class Collectors {
         return (iterable: Iterable<T>) => new HashSet(iterable);
     }
 
+    public static CacheSet<T>(): (iterable: Iterable<T>) => CacheSet<T> {
+        return (iterable: Iterable<T>) => new CacheSet(iterable);
+    }
+
+    public static TreeSet<T>(compareFn: Comparator<T>): (iterable: Iterable<T>) => TreeSet<T> {
+        return (iterable: Iterable<T>) => new TreeSet(compareFn, iterable);
+    }
+
     public static PriorityQueue<T>(compareFn: Comparator<T>): (iterable: Iterable<T>) => PriorityQueue<T> {
         return (iterable: Iterable<T>) => new PriorityQueue(compareFn, iterable);
     }
 
     public static HashMap<K, V>(): (iterable: Iterable<[K, V]>) => HashMap<K, V> {
         return (iterable: Iterable<[K, V]>) => new HashMap(iterable);
+    }
+
+    public static CacheMap<K, V>(): (iterable: Iterable<[K, V]>) => CacheMap<K, V> {
+        return (iterable: Iterable<[K, V]>) => new CacheMap(iterable);
     }
 
     public static TreeMap<K, V>(compareFn: Comparator<K>): (iterable: Iterable<[K, V]>) => TreeMap<K, V> {

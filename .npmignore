@@ -2,3 +2,5 @@ dist/test*
 
 .gitignore
 tsconfig*
+
+src

@@ -1,7 +1,9 @@
+import { ArrayList, Stack } from "./collections";
+import { HashTable } from "./hashtable";
 import { Stream } from "./stream";
-import { Consumer, Functional, pipe } from "./utils";
+import { Dictionary, UnaryOperator } from "./utils";
 
-/*let test = HashTable.of([1, "Dio"], [2, "Cane"]);
+let test = HashTable.of([1, "Dio"], [2, "Cane"]);
 test.forEach((value) => console.log(value));
 test.open().then(accessor => accessor.entries()
     .map<[string, number]>(([key, value]) => [value, key])
@@ -12,10 +14,6 @@ test.open().then(test => {
     for (const i in Dictionary.from(test))
         console.log(i);
 });
-
-function test<S>(optional: Optional<S>) {
-    return optional.get();
-}
 
 function fib() {
     return (cache: Stack<number>, n: number) => {
@@ -31,7 +29,4 @@ function fib() {
     }
 }
 
-console.log("(Index, Value):", ...Stream.iterate(0, UnaryOperator.increment()).cacheMap(fib(), new LinkedStack()).until(n => !Number.isFinite(n)).reduce((prev, value, index) => [index, value], [-1, -1]));
-*/
-
-pipe((map: Map<number, string>) => map.set(1, "Dios"), Stream.from, Functional.toString()).map(Consumer.log()).call(new Map());
+console.log("(Index, Value):", ...Stream.iterate(0, UnaryOperator.increment()).cacheMap(fib(), new ArrayList()).until(n => !Number.isFinite(n)).reduce((prev, value, index) => [index, value], [-1, -1]));
