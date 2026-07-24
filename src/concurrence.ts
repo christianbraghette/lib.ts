@@ -1,4 +1,3 @@
-import { ArrayList, Queue } from "./collections";
 import { Consumer, Executor, Supplier } from "./functional";
 
 type RejectReason = 'reset' | 'error' | 'timeout';
@@ -10,14 +9,71 @@ export interface SemaphoreLock<T> {
 }
 
 class QueueNode<T> {
-    constructor(public readonly resolve: Consumer<SemaphoreLock<T>>, public readonly reject: Consumer<RejectReason>) { }
+    next?: QueueNode<T>;
+
+    constructor(
+        public readonly resolve: Consumer<SemaphoreLock<T>>,
+        public readonly reject: Consumer<RejectReason>
+    ) { }
+}
+
+class SemaphoreQueue<T> {
+    #head?: QueueNode<T>;
+    #tail?: QueueNode<T>;
+    #size: number = 0;
+
+    public get size(): number {
+        return this.#size;
+    }
+
+    public add(node: QueueNode<T>): this {
+        if (!this.#tail) {
+            this.#head = node;
+            this.#tail = node;
+        } else {
+            this.#tail.next = node;
+            this.#tail = node;
+        }
+        this.#size++;
+        return this;
+    }
+
+    public remove(): QueueNode<T> | undefined {
+        if (!this.#head)
+            return undefined;
+        const node = this.#head;
+        this.#head = node.next;
+        if (!this.#head)
+            this.#tail = undefined;
+        this.#size--;
+        return node;
+    }
+
+    public delete(node: QueueNode<T>): boolean {
+        if (!this.#head)
+            return false;
+        if (this.#head === node) {
+            this.#head = undefined;
+            this.#tail = undefined;
+            return true;
+        }
+        for (let iter: QueueNode<T> | undefined = this.#head; !!iter; iter = iter.next)
+            if (iter.next === node) {
+                iter.next = iter.next.next;
+                if (!iter.next)
+                    this.#tail = iter;
+                this.#size--;
+                return true;
+            }
+        return false;
+    }
 }
 
 export class Semaphore<T> {
     #supplier: Supplier<T>;
     #count: number;
     #maxCount: number;
-    readonly #queue: Queue<QueueNode<T>> = new ArrayList<QueueNode<T>>();
+    readonly #queue = new SemaphoreQueue<T>();
 
     public constructor(supplier: Supplier<T>, maxCount: number) {
         this.#supplier = supplier;
@@ -43,7 +99,7 @@ export class Semaphore<T> {
 
     readonly #resolver = () => {
         if (this.#count++ < 0)
-            this.#queue.remove().get().resolve(new LockConstructor(this.#supplier(), this.#resolver));
+            this.#queue.remove()?.resolve(new LockConstructor(this.#supplier(), this.#resolver));
     }
 
     public acquire(timeoutMs?: number): Promise<SemaphoreLock<T>> {
@@ -63,7 +119,7 @@ export class Semaphore<T> {
 
             if (timeoutMs)
                 timeout = setTimeout(() => {
-                    this.#queue.delete(entry)
+                    this.#queue.delete(entry);
                     reject('timeout');
                 }, timeoutMs)
 
@@ -80,14 +136,14 @@ export class Semaphore<T> {
     }
 
     public releaseAll(): void {
-        for(let node = this.#queue.remove(); node.some(); node = this.#queue.remove())
-            node.get().resolve(LockConstructor.released(this.#supplier()));
+        for (let node = this.#queue.remove(); !!node; node = this.#queue.remove())
+            node?.resolve(LockConstructor.released(this.#supplier()));
         this.#count = this.#maxCount;
     }
 
     public rejectAll(): void {
-        for(let node = this.#queue.remove(); node.some(); node = this.#queue.remove())
-            node.get().reject('reset');
+        for (let node = this.#queue.remove(); !!node; node = this.#queue.remove())
+            node?.reject('reset');
         this.#count = this.#maxCount;
     }
 
