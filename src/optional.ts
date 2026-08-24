@@ -38,10 +38,6 @@ export abstract class Optional<T> extends IterableObject<T> implements Functiona
     public abstract map<S>(fn: Functional<T, S>): Optional<S>;
     public abstract flatMap<S>(fn: Functional<T, Optional<S>>): Optional<S>;
 
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     public static none<S>(): None<S> {
         return None.of();
     }

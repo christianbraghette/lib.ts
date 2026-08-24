@@ -240,10 +240,6 @@ export class Pipeline<T, R> extends IterableObject<Functional<T, R>> implements 
         return obj;
     }
 
-    public pipe(): Pipeline<T, R> {
-        return this;
-    }
-
     public call(value: T): R {
         return this(value);
     }
@@ -261,7 +257,7 @@ export class Pipeline<T, R> extends IterableObject<Functional<T, R>> implements 
     }
 
     public iterate(iterable: Iterable<T>): Stream<R> {
-        return Stream.from(iterable).map(this.pipe());
+        return Stream.from(iterable).map(this);
     }
 
     public map<S>(fn: Functional<R, S>): Pipeline<T, S> {

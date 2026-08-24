@@ -16,11 +16,7 @@ export abstract class AsyncIterableObject<T, R = void> extends IterableObject<T,
     abstract [Symbol.asyncIterator](): AsyncIterableIterator<T, R>;
 }
 
-export interface PipepableObject<F extends GenericFunctional<any, any>> {
-    pipe(): F
-}
-
-export interface FunctionalObject extends PipepableObject<GenericFunctional<any, any>>, IterableObject<any> {
+export interface FunctionalObject extends IterableObject<any> {
     map<S>(fn: Functional<any, S>): FunctionalObject;
     flatMap<S>(fn: Functional<any, S | FunctionalObject>): FunctionalObject;
 }

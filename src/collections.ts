@@ -19,10 +19,6 @@ export abstract class Collection<T> extends IterableObject<T> implements Functio
         return Array.from(this);
     }
 
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     abstract stream(): Stream<T>;
 
     abstract [Symbol.iterator](): IterableIterator<T>;

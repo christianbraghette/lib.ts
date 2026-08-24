@@ -19,10 +19,6 @@ export abstract class Map<K, V> extends IterableObject<[K, V]> implements Functi
     abstract values(): Stream<V>;
     abstract entries(): Stream<[K, V]>
 
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     abstract map<S>(fn: TriFunctional<V, K, this, S>): Map<K, S>;
     abstract flatMap<S>(fn: TriFunctional<V, K, this, S | Map<K, S>>): Map<K, S>
 

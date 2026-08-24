@@ -127,10 +127,6 @@ export class HashTable<K, V> {
         }
     }
 
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     public async *[Symbol.asyncIterator](): AsyncIterableIterator<[K, V]> {
         const lock = await this.#map.acquire();
         try {
@@ -247,11 +243,6 @@ class HashTableAccessor<K, V> extends IterableObject<[K, V]> implements Map<K, V
                     yield [key, result];
             }
         }())
-    }
-
-    public pipe(): Supplier<this> {
-        this.#check();
-        return () => this;
     }
 
     public [Symbol.iterator](): IterableIterator<[K, V]> {

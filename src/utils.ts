@@ -111,10 +111,6 @@ export class Transaction<T, O = never> extends IterableObject<Transaction<T, O>>
         return this.#lastCommmit;
     }
 
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     public *[Symbol.iterator](): IterableIterator<this> {
         yield this;
     }

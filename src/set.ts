@@ -495,7 +495,7 @@ export class TreeSet<T> extends SortedSet<T> {
     }
 
     public stream(): Stream<T> {
-        return new Stream(this.pipe());
+        return new Stream(() => this);
     }
 
     public *[Symbol.iterator](): IterableIterator<T> {

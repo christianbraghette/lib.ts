@@ -148,10 +148,6 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
         }());
     }
 
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     public stream(): Stream<T> {
         return Stream.from(this);
     }

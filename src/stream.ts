@@ -428,10 +428,6 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         return this.toArray().toString();
     }
 
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     [Symbol.iterator](): IterableIterator<T> {
         return this.sink();
     }

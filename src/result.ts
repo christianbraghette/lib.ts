@@ -60,12 +60,6 @@ export abstract class Result<T, E extends Error> extends IterableObject<T> imple
     public abstract flatMap<S>(fn: Functional<T, Result<S, E>>): Result<S, E>;
     public abstract mapError<M extends Error>(fn: Functional<E, M>): Result<T, M>;
 
-    
-
-    public pipe(): Supplier<this> {
-        return () => this;
-    }
-
     public static ok<T, E extends Error = never>(value: T): Ok<T, E> {
         return new Ok(value);
     }
