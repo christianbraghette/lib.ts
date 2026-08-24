@@ -1,127 +1,191 @@
 import { Consumer, Executor, Predicate, Supplier, Functional } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
-import { Optional } from "./optional";
 
 export type Throwable<T, E extends Error = Error> = T & { readonly __error?: E };
 export type Try<T> = T extends Throwable<infer U> ? U : T;
 export type Catch<T> = T extends Throwable<any, infer E> ? E : never;
 
-export class Result<T extends Throwable<any>> extends IterableObject<Try<T>> implements FunctionalObject {
-    #value: Optional<Try<T>>;
-    #error: Catch<T>;
+export interface ResultMatcher<T, E extends Error, R> {
+    ok: (value: T) => R;
+    err: (error: E) => R;
+}
 
-    constructor(supplier: Supplier<T>) {
-        super();
-        try {
-            this.#value = Optional.of(supplier() as Try<T>);
-            this.#error = new Error("Result is empty without an explicit error") as any;
-        } catch (error) {
-            this.#value = Optional.empty();
-            this.#error = error as Catch<T>;
-        }
-    }
-
-    static #createRaw<T extends Throwable<any>>(value: Optional<Try<T>>, error?: Catch<T>): Result<T> {
-        const result = Object.create(Result.prototype);
-        result.#value = value;
-        result.#error = error;
-        return result;
-    }
-
-    public get(): T {
-        const fallbackError = this.#error as any;
-        return this.#value.orThrow(fallbackError) as T;
-    }
-
-    public ok(): boolean {
-        return this.#value.some();
-    }
-
-    public catch(catcher: Consumer<Catch<T>>): this {
-        if (!this.#value.some()) {
-            catcher(this.#error ?? (new Error("Unknown error") as Catch<T>));
-        }
-        return this;
-    }
-
-    public then(consumer: Consumer<Try<T>>): this {
-        if (this.#value.some()) {
-            consumer(this.#value.get());
-        }
-        return this;
-    }
-
-    // Ora restituisce "this" per non interrompere la catena funzionale
-    public finally(executor: Executor): this {
+class Finalizer {
+    public finally(executor: Executor): void {
         executor();
-        return this;
+    }
+}
+
+class Catcher<E extends Error> extends Finalizer {
+    readonly #error?: E;
+
+    constructor(error?: E) {
+        super();
+        this.#error = error;
     }
 
-    public or(other: Try<T>): Try<T> {
-        return this.#value.or(other);
+    public catch(catcher: Consumer<E>): Finalizer {
+        if (this.#error) {
+            catcher(this.#error);
+        }
+        return new Finalizer();
     }
+}
 
-    public orGet(supplier: Supplier<Try<T>>): Try<T> {
-        return this.#value.orGet(supplier);
-    }
+export abstract class Result<T, E extends Error> extends IterableObject<T> implements FunctionalObject {
+    public abstract isOk(): this is Ok<T>;
+    public abstract isErr(): this is Err<E>;
 
-    public orThrow<E extends Error>(error: E): Throwable<Try<T>, E> {
-        return this.#value.orThrow(error);
-    }
+    public abstract orThrow(): T;
+    public abstract orGet(supplier: Supplier<T>): T;
 
-    public filter(predicate: Predicate<Try<T>>): Result<T> {
-        if (!this.#value.some()) {
-            return this;
-        }
-        const filteredValue = this.#value.filter(predicate);
-        if (!filteredValue.some()) {
-            const filterError = new Error("Value did not match predicate") as Catch<T>;
-            return Result.#createRaw<T>(Optional.empty(), filterError);
-        }
-        return this;
-    }
+    public abstract match<R>(matcher: ResultMatcher<T, E, R>): R;
+    public abstract try(consumer: Consumer<T>): Catcher<E>;
 
-    public map<S>(fn: Functional<Try<T>, S>): Result<Throwable<Try<S>, Catch<T>>> {
-        if (!this.#value.some()) {
-            // Short-circuit: restituiamo un nuovo Result fallito istantaneamente
-            return Result.#createRaw<any>(Optional.empty(), this.#error);
-        }
-        try {
-            const mapped = fn(this.#value.get());
-            return Result.#createRaw<any>(Optional.of(mapped), undefined);
-        } catch (error) {
-            return Result.#createRaw<any>(Optional.empty(), error as any);
-        }
-    }
-
-    public flatMap<S extends Throwable<any>>(fn: Functional<Try<T>, S | Result<S>>): Result<Throwable<Try<S>, Catch<S> | Catch<T>>> {
-        if (!this.#value.some()) {
-            return Result.#createRaw<any>(Optional.empty(), this.#error);
-        }
-        try {
-            const mapped = fn(this.#value.get());
-            if (mapped instanceof Result) {
-                return mapped as any;
-            }
-            return Result.#createRaw<any>(Optional.of(mapped), undefined);
-        } catch (error) {
-            return Result.#createRaw<any>(Optional.empty(), error as any);
-        }
-    }
+    public abstract or(other: Result<T, E>): Result<T, E>;
+    public abstract and<S>(other: Result<S, E>): Result<S, E>;
+    public abstract filter<M extends Error>(predicate: Predicate<T>, error: M): Result<T, E | M>;
+    public abstract map<S>(fn: Functional<T, S>): Result<S, E>;
+    public abstract flatMap<S>(fn: Functional<T, Result<S, E>>): Result<S, E>;
 
     public pipe(): Supplier<this> {
         return () => this;
     }
 
-    public [Symbol.iterator](): IterableIterator<Try<T>> {
-        return this.#value.iterator();
+    public static ok<T>(value: T): Ok<T> {
+        return new Ok(value);
     }
 
-    public static empty<M extends Error = Error>(error: M): Result<Throwable<never, M>> {
-        return Result.#createRaw<any>(Optional.empty(), error) as any;
+    public static err<E extends Error>(error: E): Err<E> {
+        return new Err(error);
     }
 
-    public static of<T extends Throwable<any>>(supplier: Supplier<T>): Result<T> {
-        return new Result(supplier);
+    public static try<T extends Throwable<any, any>>(thrower: Supplier<T>): Result<Try<T>, Catch<T>> {
+        try {
+            return new Ok<Try<T>>(thrower() as Try<T>);
+        } catch (e: any) {
+            return new Err<Catch<T>>(e as Catch<T>);
+        }
     }
+}
+
+export class Ok<T> extends Result<T, never> {
+    readonly #value: T;
+
+    public constructor(value: T) {
+        super();
+        this.#value = value;
+    }
+
+    public get value(): T {
+        return this.#value;
+    }
+
+    public override isOk(): this is Ok<T> {
+        return true;
+    }
+
+    public override isErr(): this is Err<never> {
+        return false;
+    }
+
+    public override orThrow(): T {
+        return this.#value;
+    }
+
+    public override orGet(_supplier: Supplier<T>): T {
+        return this.#value;
+    }
+
+    public override match<R>(matcher: ResultMatcher<T, never, R>): R {
+        return matcher.ok(this.#value);
+    }
+
+    public override try(consumer: Consumer<T>): Catcher<never> {
+        consumer(this.#value);
+        return new Catcher<never>();
+    }
+
+    public override or(_other: Result<T, never>): Result<T, never> {
+        return this;
+    }
+
+    public override and<S>(other: Result<S, never>): Result<S, never> {
+        return other;
+    }
+
+    public override filter<M extends Error>(predicate: Predicate<T>, error: M): Result<T, M> {
+        return predicate(this.#value) ? this : new Err(error);
+    }
+
+    public override map<S>(fn: Functional<T, S>): Result<S, never> {
+        return new Ok(fn(this.#value));
+    }
+
+    public override flatMap<S>(fn: Functional<T, Result<S, never>>): Result<S, never> {
+        return fn(this.#value);
+    }
+
+    public override *[Symbol.iterator](): IterableIterator<T> {
+        yield this.#value;
+    }
+}
+
+export class Err<E extends Error = Error> extends Result<never, E> {
+    readonly #error: E;
+
+    public constructor(error: E) {
+        super();
+        this.#error = error;
+    }
+
+    public get error(): E {
+        return this.#error;
+    }
+
+    public override isOk(): this is Ok<never> {
+        return false;
+    }
+
+    public override isErr(): this is Err<E> {
+        return true;
+    }
+
+    public override orThrow(): never {
+        throw this.#error;
+    }
+
+    public override orGet<T>(supplier: Supplier<T>): T {
+        return supplier();
+    }
+
+    public override match<R>(matcher: ResultMatcher<never, E, R>): R {
+        return matcher.err(this.#error);
+    }
+
+    public override try(_consumer: Consumer<never>): Catcher<E> {
+        return new Catcher(this.#error);
+    }
+
+    public override or<T>(other: Result<T, E>): Result<T, E> {
+        return other;
+    }
+
+    public override and<S>(_other: Result<S, E>): Result<S, E> {
+        return this;
+    }
+
+    public override filter<M extends Error>(_predicate: Predicate<never>, _error: M): Result<never, E> {
+        return this;
+    }
+
+    public override map<S>(_fn: Functional<never, S>): Result<S, E> {
+        return this;
+    }
+
+    public override flatMap<S>(_fn: Functional<never, Result<S, E>>): Result<S, E> {
+        return this;
+    }
+
+    public override *[Symbol.iterator](): IterableIterator<never> {}
 }

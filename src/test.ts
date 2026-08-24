@@ -21,8 +21,8 @@ function fib() {
             cache.add(n);
             return n;
         }
-        const n1 = cache.removeLast().get();
-        const n2 = cache.removeLast().get();
+        const n1 = cache.removeLast().orThrow();
+        const n2 = cache.removeLast().orThrow();
         const n0 = n1 + n2;
         cache.add(n2, n1, n0);
         return n0;

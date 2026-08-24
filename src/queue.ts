@@ -59,7 +59,7 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
 
     public remove(): Optional<T> {
         if (this.size === 0)
-            return Optional.empty();
+            return Optional.none();
         if (this.size === 1)
             return this.#array.removeLast();
 

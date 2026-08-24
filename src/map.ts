@@ -81,8 +81,8 @@ export class HashMap<K, V> extends Map<K, V> {
      */
     public get(key: K): Optional<V> {
         if (!this.#map.has(key))
-            return Optional.empty()
-        return Optional.of(this.#map.get(key)!);
+            return Optional.none()
+        return Optional.some(this.#map.get(key)!);
     }
 
     /**
@@ -353,12 +353,12 @@ export class TreeMap<K, V> extends SortedMap<K, V> {
             }
 
             if (i < len && this.#compareFn(key, current.entries[i][0]) === 0) {
-                return Optional.of(current.entries[i][1]);
+                return Optional.some(current.entries[i][1]);
             }
 
             current = current.isLeaf ? undefined : current.children[i];
         }
-        return Optional.empty();
+        return Optional.none();
     }
 
     public has(...keys: K[]): boolean {
@@ -492,21 +492,21 @@ export class TreeMap<K, V> extends SortedMap<K, V> {
     }
 
     public first(): Optional<K> {
-        if (this.#size === 0) return Optional.empty();
+        if (this.#size === 0) return Optional.none();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[0];
         }
-        return Optional.of(current.entries[0][0]);
+        return Optional.some(current.entries[0][0]);
     }
 
     public last(): Optional<K> {
-        if (this.#size === 0) return Optional.empty();
+        if (this.#size === 0) return Optional.none();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[current.children.length - 1];
         }
-        return Optional.of(current.entries[current.entries.length - 1][0]);
+        return Optional.some(current.entries[current.entries.length - 1][0]);
     }
 
     public comparator(): Comparator<K> {

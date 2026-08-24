@@ -4,7 +4,7 @@ import { BiConsumer, BiFunctional, BiPredicate, Comparator, Executor, Functional
 import { ArrayList, SortedArrayList } from "./list";
 import { CacheMap, HashMap, TreeMap } from "./map";
 import { AsyncIterableObject, FunctionalObject } from "./objects";
-import { Optional, Some } from "./optional";
+import { Optional, Some, isSome } from "./optional";
 import { PriorityQueue } from "./queue";
 import { CacheSet, HashSet, TreeSet } from "./set";
 
@@ -263,9 +263,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
                 buffer = new ArrayList<T>();
                 const aux: Stack<T> = new ArrayList(source);
                 let item: Optional<T>
-                while (Some(item = aux.removeLast())) {
-                    buffer.add(item.get());
-                    yield item.get();
+                while (isSome(item = aux.removeLast())) {
+                    buffer.add(item.value);
+                    yield item.value;
                 }
             }
             yield* buffer;
@@ -398,7 +398,7 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
             const key = keyFn(value, i++);
             if (!cache.has(key))
                 cache.set(key, new ArrayList());
-            cache.get(key).get().add(value);
+            (cache.get(key) as Some<ArrayList<T>>).value.add(value);
         }
         return cache;
     }

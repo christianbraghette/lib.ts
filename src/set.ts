@@ -386,21 +386,21 @@ export class TreeSet<T> extends SortedSet<T> {
     }
 
     public first(): Optional<T> {
-        if (this.#size === 0) return Optional.empty();
+        if (this.#size === 0) return Optional.none();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[0];
         }
-        return Optional.of(current.elements[0]);
+        return Optional.some(current.elements[0]);
     }
 
     public last(): Optional<T> {
-        if (this.#size === 0) return Optional.empty();
+        if (this.#size === 0) return Optional.none();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[current.children.length - 1];
         }
-        return Optional.of(current.elements[current.elements.length - 1]);
+        return Optional.some(current.elements[current.elements.length - 1]);
     }
 
     public clear(): void {
