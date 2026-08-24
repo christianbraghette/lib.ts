@@ -9,12 +9,12 @@ class EmptyOptionalError extends Error {
     }
 }
 
-export function isSome<T>(optional: Optional<T>): optional is Some<T> {
-    return optional.isSome();
+export function isSome<T>(obj: Optional<T>): obj is Some<T> {
+    return obj.isSome();
 }
 
-export function isNone<T>(optional: Optional<T>): optional is None<T> {
-    return optional.isNone();
+export function isNone<T>(obj: Optional<T>): obj is None<T> {
+    return obj.isNone();
 }
 
 class Finalizer {
@@ -36,7 +36,7 @@ interface OptionalMatcher<T, R> {
     none: () => R;
 }
 
-export abstract class Optional<T> extends IterableObject<T> implements FunctionalObject {
+abstract class Optional<T> extends IterableObject<T> implements FunctionalObject {
     public abstract isSome(): this is Some<T>;
     public abstract isNone(): this is None<T>;
 
@@ -53,21 +53,9 @@ export abstract class Optional<T> extends IterableObject<T> implements Functiona
     public abstract filter(predicate: Predicate<T>): Optional<T>;
     public abstract map<S>(fn: Functional<T, S>): Optional<S>;
     public abstract flatMap<S>(fn: Functional<T, Optional<S>>): Optional<S>;
-
-    public static none<S>(): None<S> {
-        return None.of();
-    }
-
-    public static some<S>(value: S): Some<S> {
-        return new Some(value);
-    }
-
-    public static ofNullable<S>(value: S): Optional<NonNullable<S>> {
-        return (value === null || value === undefined
-            ? None.of()
-            : new Some(value as NonNullable<S>)) as Optional<NonNullable<S>>;
-    }
 }
+
+export type { Optional };
 
 export class Some<T> extends Optional<T> {
     readonly #value: T;

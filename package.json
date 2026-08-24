@@ -1,6 +1,6 @@
 {
   "name": "easylib.ts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The foundational library for bulletproof TypeScript: Java-style Collections, Maps, Streams, Functionals, Optional, and Result types for safer type-driven development.",
   "keywords": [
     "typescript",

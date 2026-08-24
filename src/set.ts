@@ -1,6 +1,6 @@
 import { Set, SortedSet, Collection } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
-import { Optional } from "./optional";
+import { None, Optional, Some } from "./optional";
 import { Stream } from "./stream";
 import { NativeSet } from "./native";
 import { ArrayList } from "./list";
@@ -386,21 +386,21 @@ export class TreeSet<T> extends SortedSet<T> {
     }
 
     public first(): Optional<T> {
-        if (this.#size === 0) return Optional.none();
+        if (this.#size === 0) return None.of();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[0];
         }
-        return Optional.some(current.elements[0]);
+        return Some.of(current.elements[0]);
     }
 
     public last(): Optional<T> {
-        if (this.#size === 0) return Optional.none();
+        if (this.#size === 0) return None.of();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[current.children.length - 1];
         }
-        return Optional.some(current.elements[current.elements.length - 1]);
+        return Some.of(current.elements[current.elements.length - 1]);
     }
 
     public clear(): void {

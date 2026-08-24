@@ -2,7 +2,7 @@ import { Collection, Queue, SortedQueue } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { ArrayList } from "./list";
 import { IterableObject } from "./objects";
-import { Optional } from "./optional";
+import { None, Optional } from "./optional";
 import { Stream } from "./stream";
 
 export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T> {
@@ -59,7 +59,7 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
 
     public remove(): Optional<T> {
         if (this.size === 0)
-            return Optional.none();
+            return None.of();
         if (this.size === 1)
             return this.#array.removeLast();
 

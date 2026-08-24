@@ -1,7 +1,7 @@
 import { Deque, List, SortedList, SortedQueue, Stack, Collection } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { Stream } from "./stream";
-import { Optional } from "./optional";
+import { None, Optional, Some } from "./optional";
 
 export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
     #data: T[];
@@ -22,15 +22,15 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
 
     public removeLast(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data.pop()!);
-        return Optional.none();
+            return Some.of(this.#data.pop()!);
+        return None.of();
 
     }
 
     public remove(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data.shift()!);
-        return Optional.none();
+            return Some.of(this.#data.shift()!);
+        return None.of();
 
     }
 
@@ -44,15 +44,15 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
 
     public first(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data[0]!);
-        return Optional.none();
+            return Some.of(this.#data[0]!);
+        return None.of();
 
     }
 
     public last(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data[this.#data.length - 1]!);
-        return Optional.none();
+            return Some.of(this.#data[this.#data.length - 1]!);
+        return None.of();
 
     }
 
@@ -73,8 +73,8 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
 
     public get(index: number): Optional<T> {
         if (index < this.#data.length && index >= 0)
-            return Optional.some(this.#data[index]!);
-        return Optional.none();
+            return Some.of(this.#data[index]!);
+        return None.of();
     }
 
     public indexOf(searchElement: T, fromIndex: number = 0): number {
@@ -194,14 +194,14 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
 
     public removeLast(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data.pop()!);
-        return Optional.none();
+            return Some.of(this.#data.pop()!);
+        return None.of();
     }
 
     public remove(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data.shift()!);
-        return Optional.none();
+            return Some.of(this.#data.shift()!);
+        return None.of();
     }
 
     public clear(): void {
@@ -210,14 +210,14 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
 
     public first(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data[0]!);
-        return Optional.none();
+            return Some.of(this.#data[0]!);
+        return None.of();
     }
 
     public last(): Optional<T> {
         if (this.#data.length > 0)
-            return Optional.some(this.#data[this.#data.length - 1]!);
-        return Optional.none();
+            return Some.of(this.#data[this.#data.length - 1]!);
+        return None.of();
     }
 
     public has(...items: T[]): boolean {
@@ -255,8 +255,8 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
 
     public get(index: number): Optional<T> {
         if (index < this.#data.length && index >= 0)
-            return Optional.some(this.#data[index]!);
-        return Optional.none();
+            return Some.of(this.#data[index]!);
+        return None.of();
     }
 
     public indexOf(searchElement: T, fromIndex: number = 0): number {

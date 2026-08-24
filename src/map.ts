@@ -2,7 +2,7 @@ import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { Stream } from "./stream";
 import { NativeMap } from "./native";
 import { FunctionalObject, IterableObject } from "./objects";
-import { Optional } from "./optional";
+import { None, Optional, Some } from "./optional";
 
 export abstract class Map<K, V> extends IterableObject<[K, V]> implements FunctionalObject {
     abstract readonly size: number;
@@ -77,8 +77,8 @@ export class HashMap<K, V> extends Map<K, V> {
      */
     public get(key: K): Optional<V> {
         if (!this.#map.has(key))
-            return Optional.none()
-        return Optional.some(this.#map.get(key)!);
+            return None.of()
+        return Some.of(this.#map.get(key)!);
     }
 
     /**
@@ -349,12 +349,12 @@ export class TreeMap<K, V> extends SortedMap<K, V> {
             }
 
             if (i < len && this.#compareFn(key, current.entries[i][0]) === 0) {
-                return Optional.some(current.entries[i][1]);
+                return Some.of(current.entries[i][1]);
             }
 
             current = current.isLeaf ? undefined : current.children[i];
         }
-        return Optional.none();
+        return None.of();
     }
 
     public has(...keys: K[]): boolean {
@@ -488,21 +488,21 @@ export class TreeMap<K, V> extends SortedMap<K, V> {
     }
 
     public first(): Optional<K> {
-        if (this.#size === 0) return Optional.none();
+        if (this.#size === 0) return None.of();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[0];
         }
-        return Optional.some(current.entries[0][0]);
+        return Some.of(current.entries[0][0]);
     }
 
     public last(): Optional<K> {
-        if (this.#size === 0) return Optional.none();
+        if (this.#size === 0) return None.of();
         let current = this.#root;
         while (!current.isLeaf) {
             current = current.children[current.children.length - 1];
         }
-        return Optional.some(current.entries[current.entries.length - 1][0]);
+        return Some.of(current.entries[current.entries.length - 1][0]);
     }
 
     public comparator(): Comparator<K> {
