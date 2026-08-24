@@ -47,7 +47,7 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
             const index = this.#array.indexOf(item);
             if (index === -1) continue;
 
-            const last = this.#array.removeLast().get();
+            const last = this.#array.removeLast().orThrow();
             if (index < this.size) {
                 this.#array.set(index, last);
                 this.#bubbleDown(index);
@@ -64,7 +64,7 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
             return this.#array.removeLast();
 
         const top = this.#array.first();
-        this.#array.set(0, this.#array.removeLast().get());
+        this.#array.set(0, this.#array.removeLast().orThrow());
         this.#bubbleDown(0);
 
         return top;
@@ -73,7 +73,7 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
     #bubbleUp(index: number): void {
         while (index > 0) {
             const parentIndex = Math.floor((index - 1) / 2);
-            if (this.#compareFn(this.#array.get(index).get(), this.#array.get(parentIndex).get()) < 0) {
+            if (this.#compareFn(this.#array.get(index).orThrow(), this.#array.get(parentIndex).orThrow()) < 0) {
                 this.#swap(index, parentIndex);
                 index = parentIndex;
             } else {
@@ -88,10 +88,10 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
             const left = 2 * index + 1;
             const right = 2 * index + 2;
 
-            if (left < this.size && this.#compareFn(this.#array.get(left).get(), this.#array.get(smallest).get()) < 0) {
+            if (left < this.size && this.#compareFn(this.#array.get(left).orThrow(), this.#array.get(smallest).orThrow()) < 0) {
                 smallest = left;
             }
-            if (right < this.size && this.#compareFn(this.#array.get(right).get(), this.#array.get(smallest).get()) < 0) {
+            if (right < this.size && this.#compareFn(this.#array.get(right).orThrow(), this.#array.get(smallest).orThrow()) < 0) {
                 smallest = right;
             }
 
@@ -106,8 +106,8 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
 
     #swap(i: number, j: number): void {
         const aux = this.#array.get(i);
-        this.#array.set(i, this.#array.get(j).get());
-        this.#array.set(j, aux.get());
+        this.#array.set(i, this.#array.get(j).orThrow());
+        this.#array.set(j, aux.orThrow());
     }
 
     public clear(): void {
@@ -162,13 +162,13 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
         const indexHeap: number[] = [0];
 
         const compareIndices = (i: number, j: number) => {
-            return this.#compareFn(this.#array.get(indexHeap[i]).get(), this.#array.get(indexHeap[j]).get());
+            return this.#compareFn(this.#array.get(indexHeap[i]).orThrow(), this.#array.get(indexHeap[j]).orThrow());
         };
 
         while (indexHeap.length > 0) {
             const currentIndex = indexHeap[0];
 
-            yield this.#array.get(currentIndex).get();
+            yield this.#array.get(currentIndex).orThrow();
 
             const lastIndex = indexHeap.pop()!;
             if (indexHeap.length > 0) {

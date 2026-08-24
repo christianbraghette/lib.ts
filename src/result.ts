@@ -32,6 +32,14 @@ class Catcher<E extends Error> extends Finalizer {
     }
 }
 
+export function isOk<T, E extends Error>(result: Result<T, E>): result is Ok<T> {
+    return result.isOk();
+}
+
+export function isErr<T, E extends Error>(result: Result<T, E>): result is Err<E> {
+    return result.isErr();
+}
+
 export abstract class Result<T, E extends Error> extends IterableObject<T> implements FunctionalObject {
     public abstract isOk(): this is Ok<T>;
     public abstract isErr(): this is Err<E>;

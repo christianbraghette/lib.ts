@@ -14,6 +14,14 @@ interface OptionalMatcher<T, R> {
     none: () => R;
 }
 
+export function isSome<T>(optional: Optional<T>): optional is Some<T> {
+    return optional.isSome();
+}
+
+export function isNone<T>(optional: Optional<T>): optional is None {
+    return optional.isNone();
+}
+
 export abstract class Optional<T> extends IterableObject<T> implements FunctionalObject {
     public abstract isSome(): this is Some<T>;
     public abstract isNone(): this is None;
@@ -35,16 +43,16 @@ export abstract class Optional<T> extends IterableObject<T> implements Functiona
     }
 
     public static none(): None {
-        return None.instance;
+        return None.of();
     }
 
     public static some<S>(value: S): Some<S> {
         return new Some(value);
     }
 
-    public static of<S>(value: S): Optional<NonNullable<S>> {
+    public static ofNullable<S>(value: S): Optional<NonNullable<S>> {
         return (value === null || value === undefined
-            ? None.instance
+            ? None.of()
             : new Some(value as NonNullable<S>)) as Optional<NonNullable<S>>;
     }
 }
@@ -98,7 +106,7 @@ export class Some<T> extends Optional<T> {
     }
 
     public override filter(predicate: Predicate<T>): Optional<T> {
-        return predicate(this.#value) ? this : None.instance;
+        return predicate(this.#value) ? this : None.of();
     }
 
     public override map<S>(fn: Functional<T, S>): Optional<S> {
@@ -112,10 +120,14 @@ export class Some<T> extends Optional<T> {
     public override *[Symbol.iterator](): IterableIterator<T> {
         yield this.#value;
     }
+
+    public static of<S>(value: S): Some<S> {
+        return new Some(value);
+    }
 }
 
 export class None extends Optional<never> {
-    public static readonly instance = new None();
+    static readonly #instance = new None();
 
     public override isSome(): this is Some<never> {
         return false;
@@ -146,7 +158,7 @@ export class None extends Optional<never> {
     }
 
     public override and<S>(_other: Optional<S>): Optional<S> {
-        return None.instance;
+        return None.#instance;
     }
 
     public override match<R>(matcher: OptionalMatcher<never, R>): R {
@@ -158,11 +170,15 @@ export class None extends Optional<never> {
     }
 
     public override map<S>(_fn: Functional<never, S>): Optional<S> {
-        return None.instance;
+        return None.#instance;
     }
 
     public override flatMap<S>(_fn: Functional<never, Optional<S>>): Optional<S> {
-        return None.instance;
+        return None.#instance;
+    }
+
+    public static of(): None {
+        return None.#instance;
     }
 
     public override *[Symbol.iterator](): IterableIterator<never> { }
