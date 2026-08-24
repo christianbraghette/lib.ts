@@ -1,4 +1,4 @@
-import { Supplier, TriConsumer, TriFunctional } from "./functional";
+import { TriConsumer, TriFunctional } from "./functional";
 import { HashMap, Map } from "./map";
 import { Mutex, SemaphoreLock } from "./concurrence";
 import { Throwable } from "./result";

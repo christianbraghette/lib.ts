@@ -1,4 +1,4 @@
-import { Comparator, Supplier, TriConsumer, TriFunctional } from "./functional";
+import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
 import { Optional } from "./optional";
 import { Stream } from "./stream";

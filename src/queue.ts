@@ -1,5 +1,5 @@
 import { Collection, Queue, SortedQueue } from "./collections";
-import { Comparator, Supplier, TriConsumer, TriFunctional } from "./functional";
+import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { ArrayList } from "./list";
 import { IterableObject } from "./objects";
 import { Optional } from "./optional";

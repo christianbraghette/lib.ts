@@ -1,4 +1,4 @@
-import { Comparator, Supplier, TriConsumer, TriFunctional } from "./functional";
+import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { Stream } from "./stream";
 import { NativeMap } from "./native";
 import { FunctionalObject, IterableObject } from "./objects";

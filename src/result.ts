@@ -7,15 +7,23 @@ export type Try<T> = T extends Throwable<infer U> ? U : T;
 export type Catch<T> = T extends Throwable<any, infer E> ? E : never;
 
 class Finalizer {
+    static #instance = new Finalizer();
+
+    protected constructor() { }
+
     public finally(executor: Executor): void {
         executor();
+    }
+
+    public static of(): Finalizer {
+        return Finalizer.#instance;
     }
 }
 
 class Catcher<E extends Error> extends Finalizer {
     readonly #error?: E;
 
-    constructor(error?: E) {
+    private constructor(error?: E) {
         super();
         this.#error = error;
     }
@@ -25,6 +33,10 @@ class Catcher<E extends Error> extends Finalizer {
             catcher(this.#error);
         }
         return new Finalizer();
+    }
+
+    public static of<E extends Error>(error?: E): Catcher<E> {
+        return new Catcher(error);
     }
 }
 
@@ -115,7 +127,7 @@ export class Ok<T, E extends Error = never> extends Result<T, E> {
 
     public override try(consumer: Consumer<T>): Catcher<E> {
         consumer(this.#value);
-        return new Catcher<E>();
+        return Catcher.of();
     }
 
     public override or(_other: Result<T, E>): Ok<T, E> {
@@ -192,7 +204,7 @@ export class Err<E extends Error = Error, T = never, > extends Result<T, E> {
     }
 
     public override try(_consumer: Consumer<never>): Catcher<E> {
-        return new Catcher(this.#error);
+        return Catcher.of(this.#error);
     }
 
     public override or(other: Result<T, E>): Result<T, E> {

@@ -1,4 +1,4 @@
-import { Predicate, Supplier, Functional } from "./functional";
+import { Predicate, Supplier, Functional, Executor, Consumer } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
 import { Err, Ok, Result } from "./result";
 
@@ -17,6 +17,20 @@ export function isNone<T>(optional: Optional<T>): optional is None<T> {
     return optional.isNone();
 }
 
+class Finalizer {
+    static #instance = new Finalizer();
+
+    private constructor() { }
+
+    public finally(executor: Executor): void {
+        executor();
+    }
+
+    public static of(): Finalizer {
+        return Finalizer.#instance;
+    }
+}
+
 interface OptionalMatcher<T, R> {
     some: (value: T) => R;
     none: () => R;
@@ -25,6 +39,8 @@ interface OptionalMatcher<T, R> {
 export abstract class Optional<T> extends IterableObject<T> implements FunctionalObject {
     public abstract isSome(): this is Some<T>;
     public abstract isNone(): this is None<T>;
+
+    public abstract then(fn: Consumer<T>): Finalizer;
 
     public abstract orElse(defaultValue: T): T;
     public abstract orGet(supplier: Supplier<T>): T;
@@ -71,6 +87,11 @@ export class Some<T> extends Optional<T> {
 
     public get value(): T {
         return this.#value;
+    }
+
+    public override then(fn: Consumer<T>) {
+        fn(this.#value);
+        return Finalizer.of();
     }
 
     public override orElse(_defaultValue: T): T {
@@ -131,6 +152,10 @@ export class None<T = never> extends Optional<T> {
 
     public override isNone(): this is None<T> {
         return true;
+    }
+
+    public override then(_fn: Consumer<T>) {
+        return Finalizer.of();
     }
 
     public override orElse(defaultValue: T): T {
