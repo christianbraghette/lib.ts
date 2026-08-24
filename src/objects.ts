@@ -1,5 +1,4 @@
 import { Functional, GenericFunctional } from "./functional";
-import { Throwable } from "./result";
 
 export abstract class IterableObject<T, R = void> implements Iterable<T, R> {
     public iterator() {

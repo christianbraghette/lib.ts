@@ -9,22 +9,22 @@ class EmptyOptionalError extends Error {
     }
 }
 
+export function isSome<T>(optional: Optional<T>): optional is Some<T> {
+    return optional.isSome();
+}
+
+export function isNone<T>(optional: Optional<T>): optional is None<T> {
+    return optional.isNone();
+}
+
 interface OptionalMatcher<T, R> {
     some: (value: T) => R;
     none: () => R;
 }
 
-export function isSome<T>(optional: Optional<T>): optional is Some<T> {
-    return optional.isSome();
-}
-
-export function isNone<T>(optional: Optional<T>): optional is None {
-    return optional.isNone();
-}
-
 export abstract class Optional<T> extends IterableObject<T> implements FunctionalObject {
     public abstract isSome(): this is Some<T>;
-    public abstract isNone(): this is None;
+    public abstract isNone(): this is None<T>;
 
     public abstract orElse(defaultValue: T): T;
     public abstract orGet(supplier: Supplier<T>): T;
@@ -38,11 +38,11 @@ export abstract class Optional<T> extends IterableObject<T> implements Functiona
     public abstract map<S>(fn: Functional<T, S>): Optional<S>;
     public abstract flatMap<S>(fn: Functional<T, Optional<S>>): Optional<S>;
 
-    public pipe(): Supplier<Optional<T>> {
+    public pipe(): Supplier<this> {
         return () => this;
     }
 
-    public static none(): None {
+    public static none<S>(): None<S> {
         return None.of();
     }
 
@@ -69,7 +69,7 @@ export class Some<T> extends Optional<T> {
         return true;
     }
 
-    public override isNone(): this is None {
+    public override isNone(): this is None<T> {
         return false;
     }
 
@@ -126,22 +126,22 @@ export class Some<T> extends Optional<T> {
     }
 }
 
-export class None extends Optional<never> {
-    static readonly #instance = new None();
+export class None<T = never> extends Optional<T> {
+    static readonly #instance = new None<any>();
 
-    public override isSome(): this is Some<never> {
+    public override isSome(): this is Some<T> {
         return false;
     }
 
-    public override isNone(): this is None {
+    public override isNone(): this is None<T> {
         return true;
     }
 
-    public override orElse<T>(defaultValue: T): T {
+    public override orElse(defaultValue: T): T {
         return defaultValue;
     }
 
-    public override orGet<T>(supplier: Supplier<T>): T {
+    public override orGet(supplier: Supplier<T>): T {
         return supplier();
     }
 
@@ -153,7 +153,7 @@ export class None extends Optional<never> {
         throw error ?? new EmptyOptionalError();
     }
 
-    public override or<T>(other: Optional<T>): Optional<T> {
+    public override or(other: Optional<T>): Optional<T> {
         return other;
     }
 
@@ -165,7 +165,7 @@ export class None extends Optional<never> {
         return matcher.none();
     }
 
-    public override filter(_predicate: Predicate<never>): Optional<never> {
+    public override filter(_predicate: Predicate<never>): Optional<T> {
         return this;
     }
 
@@ -177,9 +177,9 @@ export class None extends Optional<never> {
         return None.#instance;
     }
 
-    public static of(): None {
+    public override *[Symbol.iterator](): IterableIterator<never> { }
+
+    public static of<S>(): None<S> {
         return None.#instance;
     }
-
-    public override *[Symbol.iterator](): IterableIterator<never> { }
 }
