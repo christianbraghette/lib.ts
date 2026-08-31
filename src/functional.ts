@@ -277,6 +277,8 @@ export class Pipeline<T, R> extends IterableObject<Functional<T, R>> implements 
         return "[object Pipeline]";
     }
 
+    get [Symbol.toStringTag](): string { return "Pipeline"; }
+
     public *[Symbol.iterator](): IterableIterator<Pipeline<T, R>> {
         yield this;
     }

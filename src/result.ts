@@ -1,4 +1,4 @@
-import { Consumer, Executor, Predicate, Supplier, Functional } from "./functional";
+import { Consumer, Executor, Predicate, Supplier, Functional, Thrower } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
 import { None, Optional, Some } from "./optional";
 
@@ -72,20 +72,28 @@ export abstract class Result<T, E extends Error> extends IterableObject<T> imple
     public abstract flatMap<S>(fn: Functional<T, Result<S, E>>): Result<S, E>;
     public abstract mapError<M extends Error>(fn: Functional<E, M>): Result<T, M>;
 
-    public static ok<T, E extends Error = never>(value: T): Ok<T, E> {
-        return new Ok(value);
-    }
-
-    public static err<E extends Error, T = never>(error: E): Err<E, T> {
-        return new Err(error);
-    }
-
-    public static try<S, M extends Error>(thrower: Supplier<S>): Result<S, M> {
+    public get [Symbol.toStringTag](): string { return "Result"; }
+}
+export namespace Result {
+    export function ofThrowable<M extends Error, S = never>(thrower: Thrower<M>): Result<S, M> {
         try {
             return new Ok(thrower());
         } catch (e) {
             return new Err(e instanceof Error ? e : new Error(String(e))) as Err<M, S>;
         }
+    }
+
+    type FromResult<R extends Result<any, any>> =
+        R extends Result<infer S, infer E>
+        ? R extends Err ? Err<E, S> : Ok<S, E>
+        : never;
+
+    export function from<R extends Result<any, any>>(result: R): FromResult<R> {
+        if (result.isOk())
+            return Ok.of(result.value) as any;
+        if (result.isErr())
+            return Err.of(result.error) as any;
+        throw Result.from;
     }
 }
 
@@ -167,7 +175,7 @@ export class Ok<T, E extends Error = never> extends Result<T, E> {
     }
 }
 
-export class Err<E extends Error = Error, T = never, > extends Result<T, E> {
+export class Err<E extends Error = Error, T = never> extends Result<T, E> {
     readonly #error: E;
 
     public constructor(error: E) {
@@ -235,7 +243,7 @@ export class Err<E extends Error = Error, T = never, > extends Result<T, E> {
         return None.of();
     }
 
-    public override *[Symbol.iterator](): IterableIterator<never> {}
+    public override *[Symbol.iterator](): IterableIterator<never> { }
 
     public static of<M extends Error, S = never>(error: M): Err<M, S> {
         return new Err(error);

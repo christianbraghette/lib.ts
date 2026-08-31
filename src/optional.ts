@@ -36,7 +36,7 @@ interface OptionalMatcher<T, R> {
     none: () => R;
 }
 
-abstract class Optional<T> extends IterableObject<T> implements FunctionalObject {
+export abstract class Optional<T> extends IterableObject<T> implements FunctionalObject {
     public abstract isSome(): this is Some<T>;
     public abstract isNone(): this is None<T>;
 
@@ -53,9 +53,27 @@ abstract class Optional<T> extends IterableObject<T> implements FunctionalObject
     public abstract filter(predicate: Predicate<T>): Optional<T>;
     public abstract map<S>(fn: Functional<T, S>): Optional<S>;
     public abstract flatMap<S>(fn: Functional<T, Optional<S>>): Optional<S>;
-}
 
-export type { Optional };
+    public get [Symbol.toStringTag](): string { return "Optional"; }
+}
+export namespace Optional {
+    export function ofNullable<S>(obj: S): Optional<NonNullable<S>> {
+        if (obj === undefined || obj === null)
+            return None.of();
+        return Some.of(obj);
+    }
+
+    type FromOptional<O extends Optional<any>> =
+        O extends Optional<infer S>
+        ? O extends None ? None<S> : Some<S>
+        : never;
+
+    export function from<O extends Optional<any>>(optional: O): FromOptional<O> {
+        if (optional.isSome())
+            return Some.of(optional.value) as any;
+        return None.of() as any
+    }
+}
 
 export class Some<T> extends Optional<T> {
     readonly #value: T;
@@ -188,7 +206,7 @@ export class None<T = never> extends Optional<T> {
 
     public override *[Symbol.iterator](): IterableIterator<never> { }
 
-    public static of<S>(): None<S> {
+    public static of<S = never>(): None<S> {
         return None.#instance;
     }
 }
