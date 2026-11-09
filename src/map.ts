@@ -1,5 +1,5 @@
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 import { NativeMap } from "./native";
 import { FunctionalObject, IterableObject } from "./objects";
 import { None, Optional, Some } from "./optional";
@@ -15,9 +15,9 @@ export abstract class Map<K, V> extends IterableObject<[K, V]> implements Functi
     abstract get(key: K): Optional<V>;
     abstract forEach(consumer: TriConsumer<V, K, this>): void;
 
-    abstract keys(): Stream<K>
-    abstract values(): Stream<V>;
-    abstract entries(): Stream<[K, V]>
+    abstract keys(): StreamIterator<K>
+    abstract values(): StreamIterator<V>;
+    abstract entries(): StreamIterator<[K, V]>
 
     abstract map<S>(fn: TriFunctional<V, K, this, S>): Map<K, S>;
     abstract flatMap<S>(fn: TriFunctional<V, K, this, S | Map<K, S>>): Map<K, S>
@@ -146,22 +146,22 @@ export class HashMap<K, V> extends Map<K, V> {
     /**
      * Returns a new Iterator object that contains the keys for each element in the map.
      */
-    public keys(): Stream<K> {
-        return Stream.from(this.#map.keys());
+    public keys(): StreamIterator<K> {
+        return StreamIterator.from(this.#map.keys());
     }
 
     /**
      * Returns a new Iterator object that contains the values for each element in the map.
      */
-    public values(): Stream<V> {
-        return Stream.from(this.#map.values());
+    public values(): StreamIterator<V> {
+        return StreamIterator.from(this.#map.values());
     }
 
     /**
      * Returns a new Iterator object that contains the [key, value] pairs for each element in the map.
      */
-    public entries(): Stream<[K, V]> {
-        return Stream.from(this.#map.entries());
+    public entries(): StreamIterator<[K, V]> {
+        return StreamIterator.from(this.#map.entries());
     }
 
     /**
@@ -576,16 +576,16 @@ export class TreeMap<K, V> extends SortedMap<K, V> {
         }());
     }
 
-    public keys(): Stream<K> {
-        return Stream.from(this).map(([key]) => key);
+    public keys(): StreamIterator<K> {
+        return StreamIterator.from(this).map(([key]) => key);
     }
 
-    public values(): Stream<V> {
-        return Stream.from(this).map(([_, value]) => value);
+    public values(): StreamIterator<V> {
+        return StreamIterator.from(this).map(([_, value]) => value);
     }
 
-    public entries(): Stream<[K, V]> {
-        return Stream.from(this);
+    public entries(): StreamIterator<[K, V]> {
+        return StreamIterator.from(this);
     }
 
     *[Symbol.iterator](): IterableIterator<[K, V]> {

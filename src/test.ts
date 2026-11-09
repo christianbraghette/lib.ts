@@ -1,6 +1,6 @@
 import { ArrayList, Stack } from "./collections";
 import { HashTable } from "./hashtable";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 import { Consumer, Dictionary, UnaryOperator } from "./utils";
 
 let test = HashTable.of([1, "Dio"], [2, "Cane"]);
@@ -29,6 +29,6 @@ function fib() {
     }
 }
 
-console.log(Stream.iterate(0, UnaryOperator.increment()).cacheMap(fib(), new ArrayList()).limit(11).toArray())
+console.log(StreamIterator.iterate(0, UnaryOperator.increment()).cacheMap(fib(), new ArrayList()).limit(11).toArray())
 
 //console.log("(Index, Value):", ...Stream.iterate(0, UnaryOperator.increment()).cacheMap(fib(), new ArrayList()).until(n => !Number.isFinite(n)).reduce((prev, value, index) => [index, value], [-1, -1]));

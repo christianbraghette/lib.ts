@@ -1,9 +1,9 @@
 import { Functional } from "./functional";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 
 export abstract class IterableObject<T, R = void> implements Iterable<T, R> {
-    public iterator(): Stream<T> {
-        return new Stream(this[Symbol.iterator].bind(this));
+    public iterator(): StreamIterator<T> {
+        return new StreamIterator(this[Symbol.iterator].bind(this));
     }
 
     abstract [Symbol.iterator](): IterableIterator<T, R>;

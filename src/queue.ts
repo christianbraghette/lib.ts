@@ -3,7 +3,7 @@ import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { ArrayList } from "./list";
 import { IterableObject } from "./objects";
 import { None, Optional } from "./optional";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 
 export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T> {
     #array = new ArrayList<T>();

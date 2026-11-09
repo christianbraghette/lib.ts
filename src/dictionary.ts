@@ -1,5 +1,5 @@
 import { isSome, Some } from "./optional";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 
 export class Dictionary<T> {
     [key: string | number]: Some<T> | undefined;
@@ -8,7 +8,7 @@ export class Dictionary<T> {
 
     constructor(iterable?: Iterable<[keyof any, T]>) {
         this.#data = Object.fromEntries(
-            Stream.from(iterable ?? []).map(([key, value]) => [String(key), Some.of(value)])
+            StreamIterator.from(iterable ?? []).map(([key, value]) => [String(key), Some.of(value)])
         );
 
         return new Proxy(this, {

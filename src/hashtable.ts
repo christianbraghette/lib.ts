@@ -2,7 +2,7 @@ import { TriConsumer, TriFunctional } from "./functional";
 import { HashMap, Map } from "./map";
 import { Mutex, SemaphoreLock } from "./concurrence";
 import { Throwable } from "./result";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 import { IterableObject } from "./objects";
 import { Optional } from "./optional";
 
@@ -94,7 +94,7 @@ export class HashTable<K, V> {
         }
     }
 
-    public async keys(): Promise<Stream<K>> {
+    public async keys(): Promise<StreamIterator<K>> {
         const lock = await this.#map.acquire();
         try {
             return lock.get().keys();
@@ -105,7 +105,7 @@ export class HashTable<K, V> {
         }
     }
 
-    public async values(): Promise<Stream<V>> {
+    public async values(): Promise<StreamIterator<V>> {
         const lock = await this.#map.acquire();
         try {
             return lock.get().values();
@@ -116,7 +116,7 @@ export class HashTable<K, V> {
         }
     }
 
-    public async entries(): Promise<Stream<[K, V]>> {
+    public async entries(): Promise<StreamIterator<[K, V]>> {
         const lock = await this.#map.acquire();
         try {
             return lock.get().entries();
@@ -209,17 +209,17 @@ class HashTableAccessor<K, V> extends IterableObject<[K, V]> implements Map<K, V
         return this.#map.forEach((value, key) => callbackfn(value, key, this));
     }
 
-    public keys(): Stream<K> {
+    public keys(): StreamIterator<K> {
         this.#check();
         return this.#map.keys();
     }
 
-    public values(): Stream<V> {
+    public values(): StreamIterator<V> {
         this.#check();
         return this.#map.values();
     }
 
-    public entries(): Stream<[K, V]> {
+    public entries(): StreamIterator<[K, V]> {
         this.#check();
         return this.#map.entries();
     }

@@ -1,6 +1,6 @@
 import { FunctionalObject } from "./objects";
 import { Throwable } from "./result";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 
 export type Functional<T, R> = (args_0: T) => R;
 export type BiFunctional<T, S, R> = (args_0: T, args_1: S) => R;
@@ -255,8 +255,8 @@ export class Pipeline<T, R> implements Functional<T, R>, FunctionalObject {
         return this.bind(supplier());
     }
 
-    public iterate(iterable: Iterable<T>): Stream<R> {
-        return Stream.from(iterable).map(this);
+    public iterate(iterable: Iterable<T>): StreamIterator<R> {
+        return StreamIterator.from(iterable).map(this);
     }
 
     public map<S>(fn: Functional<R, S>): Pipeline<T, S> {

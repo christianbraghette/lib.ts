@@ -1,7 +1,7 @@
 import { Set, SortedSet, Collection } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { None, Optional, Some } from "./optional";
-import { Stream } from "./stream";
+import { StreamIterator } from "./stream";
 import { NativeSet } from "./native";
 import { ArrayList } from "./list";
 

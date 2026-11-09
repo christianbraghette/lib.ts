@@ -86,9 +86,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         return this.#locked;
     }
 
-    public take(count: number, offset: number = 0): Stream<T> {
+    public take(count: number, offset: number = 0): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(
+        return new StreamIterator(
             function* () {
                 let i = 0;
                 for (const val of source) {
@@ -101,9 +101,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         );
     }
 
-    public drop(offset: number): Stream<T> {
+    public drop(offset: number): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(
+        return new StreamIterator(
             function* () {
                 let i = 0;
                 for (const val of source) {
@@ -115,9 +115,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         );
     }
 
-    public limit(count: number): Stream<T> {
+    public limit(count: number): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(
+        return new StreamIterator(
             function* () {
                 let i = 0;
                 for (const val of source) {
@@ -129,9 +129,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         );
     }
 
-    public while(predicate: BiPredicate<T, number>): Stream<T> {
+    public while(predicate: BiPredicate<T, number>): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(function* () {
+        return new StreamIterator(function* () {
             let i = 0;
             for (const value of source) {
                 if (!predicate(value, i++)) break;
@@ -140,9 +140,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         });
     }
 
-    public skip(predicate: BiPredicate<T, number>): Stream<T> {
+    public skip(predicate: BiPredicate<T, number>): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(function* () {
+        return new StreamIterator(function* () {
             let i = 0;
             let dropping = true;
             for (const value of source) {
@@ -153,9 +153,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         });
     }
 
-    public until(predicate: BiPredicate<T, number>): Stream<T> {
+    public until(predicate: BiPredicate<T, number>): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(
+        return new StreamIterator(
             function* () {
                 let i = 0;
                 for (const val of source) {
@@ -166,9 +166,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         );
     }
 
-    public map<U>(callbackfn: BiFunctional<T, number, U>): Stream<U> {
+    public map<U>(callbackfn: BiFunctional<T, number, U>): StreamIterator<U> {
         const source = this.#lock();
-        return new Stream(
+        return new StreamIterator(
             function* (): IterableIterator<U> {
                 let i = 0;
                 for (const value of source)
@@ -177,23 +177,23 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         );
     }
 
-    public cacheMap<U, R>(callbackfn: TriFunctional<U, T, number, R>, cache: U): Stream<R> {
+    public cacheMap<U, R>(callbackfn: TriFunctional<U, T, number, R>, cache: U): StreamIterator<R> {
         let i = 0;
         const source = this.#lock();
-        return new Stream(function* () {
+        return new StreamIterator(function* () {
             for (const value of source) {
                 yield callbackfn(cache, value, i++);
             }
         })
     }
 
-    public flatMap<U>(callbackfn: BiFunctional<T, number, U | Stream<U>>): Stream<U> {
+    public flatMap<U>(callbackfn: BiFunctional<T, number, U | StreamIterator<U>>): StreamIterator<U> {
         const source = this.#lock();
-        return new Stream(function* () {
+        return new StreamIterator(function* () {
             let i = 0
             for (const value of source) {
                 const mapped = callbackfn(value, i++);
-                if (mapped instanceof Stream) {
+                if (mapped instanceof StreamIterator) {
                     yield* mapped;
                 } else {
                     yield mapped;
@@ -202,9 +202,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         });
     }
 
-    public filter<S extends T>(predicate: BiPredicate<T, number>): Stream<S> {
+    public filter<S extends T>(predicate: BiPredicate<T, number>): StreamIterator<S> {
         const source = this.#lock();
-        return new Stream(
+        return new StreamIterator(
             function* () {
                 let i = 0;
                 for (const value of source) {
@@ -216,9 +216,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         );
     }
 
-    public peek(callbackfn: BiConsumer<T, number>): Stream<T> {
+    public peek(callbackfn: BiConsumer<T, number>): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(function* () {
+        return new StreamIterator(function* () {
             let i = 0;
             for (const value of source) {
                 callbackfn(value, i++);
@@ -231,9 +231,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         call?: Executor,
         peek?: BiConsumer<T, number>,
         return?: Executor
-    }): Stream<T> {
+    }): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(function* () {
+        return new StreamIterator(function* () {
             opts.call?.();
             if (opts.peek) {
                 let i = 0;
@@ -248,9 +248,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         });
     }
 
-    public sort(compareFn: Comparator<T>): Stream<T> {
+    public sort(compareFn: Comparator<T>): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(function* () {
+        return new StreamIterator(function* () {
             yield* new SortedArrayList(compareFn, source);
         })
     }
@@ -305,9 +305,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         });
     }
 
-    public iterator(): Stream<T> {
+    public iterator(): StreamIterator<T> {
         const source = this.#lock();
-        return new Stream(() => source);
+        return new StreamIterator(() => source);
     }
 
     // Terminators
@@ -407,9 +407,9 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         return collector(this.#lock());
     }
 
-    public tee(...funcs: Functional<BufferedStream<T>, Stream<T> | BufferedStream<T> | void>[]): ArrayList<Stream<T>> {
+    public tee(...funcs: Functional<BufferedStream<T>, StreamIterator<T> | BufferedStream<T> | void>[]): ArrayList<StreamIterator<T>> {
         const buffer = this.buffer();
-        return new Stream(() => funcs.values()).map(fn => fn(buffer)?.iterator()).filter<Stream<T>>(val => !!val).collect(ArrayList.from);
+        return new StreamIterator(() => funcs.values()).map(fn => fn(buffer)?.iterator()).filter<StreamIterator<T>>(val => !!val).collect(ArrayList.from);
     }
 
     public *sink(): IterableIterator<T> {
@@ -438,10 +438,10 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
 
     get [Symbol.toStringTag](): string { return "Stream"; }
 
-    public static join<S>(...iterables: Iterable<S>[]): Stream<S[]> {
+    public static join<S>(...iterables: Iterable<S>[]): StreamIterator<S[]> {
         const iterators = iterables.map(val => val[Symbol.iterator]()) as Iterator<S>[];
 
-        return new Stream(
+        return new StreamIterator(
             function* () {
                 while (true) {
                     var res = iterators.map(val => val.next());
@@ -452,16 +452,16 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         );
     }
 
-    public static generate<S>(supplier: Supplier<S>): Stream<S> {
-        return new Stream(function* () {
+    public static generate<S>(supplier: Supplier<S>): StreamIterator<S> {
+        return new StreamIterator(function* () {
             while (true) {
                 yield supplier();
             }
         });
     }
 
-    public static iterate<S>(startValue: S, fn: UnaryOperator<S>): Stream<S> {
-        return new Stream(function* () {
+    public static iterate<S>(startValue: S, fn: UnaryOperator<S>): StreamIterator<S> {
+        return new StreamIterator(function* () {
             let currentValue = startValue;
             yield currentValue;
             while (true) {
@@ -471,27 +471,27 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         });
     }
 
-    public static concat<S>(...iterables: Iterable<S>[]): Stream<S> {
-        return new Stream(function* () {
+    public static concat<S>(...iterables: Iterable<S>[]): StreamIterator<S> {
+        return new StreamIterator(function* () {
             for (const iterable of iterables)
                 yield* iterable;
         });
     }
 
-    public static of<S>(...items: S[]): Stream<S> {
-        return new Stream(() => items);
+    public static of<S>(...items: S[]): StreamIterator<S> {
+        return new StreamIterator(() => items);
     }
 
-    public static from<S>(iterable: Iterable<S>): Stream<S> {
-        return new Stream(() => iterable);
+    public static from<S>(iterable: Iterable<S>): StreamIterator<S> {
+        return new StreamIterator(() => iterable);
     }
 
-    public static fromObject<S>(obj: Record<string | number, S>): Stream<[string, S]> {
-        return new Stream(() => Object.entries(obj));
+    public static fromObject<S>(obj: Record<string | number, S>): StreamIterator<[string, S]> {
+        return new StreamIterator(() => Object.entries(obj));
     }
 }
 
-export class Stream<T> extends StreamConstructor<T> {
+export class StreamIterator<T> extends StreamConstructor<T> {
     constructor(supplier: Supplier<Iterable<T>>) {
         super(supplier, false)
     }
@@ -502,7 +502,7 @@ class BufferedStream<T> extends StreamConstructor<T> {
         super(supplier, true);
     }
 
-    public override iterator(): Stream<T> {
-        return new Stream(() => this.sink())
+    public override iterator(): StreamIterator<T> {
+        return new StreamIterator(() => this.sink())
     }
 }
