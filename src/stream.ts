@@ -305,7 +305,7 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         });
     }
 
-    public stream(): Stream<T> {
+    public iterator(): Stream<T> {
         const source = this.#lock();
         return new Stream(() => source);
     }
@@ -400,7 +400,7 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
                 cache.set(key, new ArrayList());
             (cache.get(key) as Some<ArrayList<T>>).value.add(value);
         }
-        return cache;
+        return cache as any;
     }
 
     public collect<C>(collector: Collector<T, C>): C {
@@ -409,7 +409,7 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
 
     public tee(...funcs: Functional<BufferedStream<T>, Stream<T> | BufferedStream<T> | void>[]): ArrayList<Stream<T>> {
         const buffer = this.buffer();
-        return new Stream(() => funcs.values()).map(fn => fn(buffer)?.stream()).filter<Stream<T>>(val => !!val).collect(ArrayList.from);
+        return new Stream(() => funcs.values()).map(fn => fn(buffer)?.iterator()).filter<Stream<T>>(val => !!val).collect(ArrayList.from);
     }
 
     public *sink(): IterableIterator<T> {
@@ -502,7 +502,7 @@ class BufferedStream<T> extends StreamConstructor<T> {
         super(supplier, true);
     }
 
-    public override stream(): Stream<T> {
+    public override iterator(): Stream<T> {
         return new Stream(() => this.sink())
     }
 }

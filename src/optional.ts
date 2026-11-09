@@ -172,7 +172,7 @@ export class None<T = never> extends Optional<T> {
         return supplier();
     }
 
-    public override orErr<E extends Error>(error: E): Err<E> {
+    public override orErr<E extends Error>(error: E): Err<E, T> {
         return new Err(error);
     }
 

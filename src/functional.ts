@@ -1,4 +1,4 @@
-import { FunctionalObject, IterableObject } from "./objects";
+import { FunctionalObject } from "./objects";
 import { Throwable } from "./result";
 import { Stream } from "./stream";
 
@@ -220,10 +220,9 @@ export namespace Thrower {
 export interface Pipeline<T, R> {
     (args_0: T): R;
 }
-export class Pipeline<T, R> extends IterableObject<Functional<T, R>> implements Functional<T, R>, FunctionalObject {
+export class Pipeline<T, R> implements Functional<T, R>, FunctionalObject {
 
     constructor(...funcs: Functional<any, any>[]) {
-        super();
         let source: Functional<any, any> | undefined = undefined;
         for (const functional of funcs)
             if (!source)
@@ -278,10 +277,6 @@ export class Pipeline<T, R> extends IterableObject<Functional<T, R>> implements 
     }
 
     get [Symbol.toStringTag](): string { return "Pipeline"; }
-
-    public *[Symbol.iterator](): IterableIterator<Pipeline<T, R>> {
-        yield this;
-    }
 }
 
 export function pipe<A, O>(f1: Functional<A, O>): Pipeline<A, O>;

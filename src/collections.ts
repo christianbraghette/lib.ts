@@ -1,7 +1,6 @@
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
 import { Optional } from "./optional";
-import { Stream } from "./stream";
 
 export abstract class Collection<T> extends IterableObject<T> implements FunctionalObject {
     abstract readonly size: number;
@@ -18,8 +17,6 @@ export abstract class Collection<T> extends IterableObject<T> implements Functio
     public toArray(): T[] {
         return Array.from(this);
     }
-
-    abstract stream(): Stream<T>;
 
     abstract [Symbol.iterator](): IterableIterator<T>;
 }

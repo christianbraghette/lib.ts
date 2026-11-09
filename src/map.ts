@@ -78,7 +78,7 @@ export class HashMap<K, V> extends Map<K, V> {
     public get(key: K): Optional<V> {
         if (!this.#map.has(key))
             return None.of()
-        return Some.of(this.#map.get(key)!);
+        return Some.of(this.#map.get(key)! as V);
     }
 
     /**

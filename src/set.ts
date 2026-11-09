@@ -95,12 +95,8 @@ export class HashSet<T> extends Set<T> {
 
     public isSubsetOf(other: Set<T>): boolean {
         if (this.size > other.size) return false;
-        return this.stream().every(value => other.has(value));
+        return this.iterator().every(value => other.has(value));
     }
-
-    public stream(): Stream<T> {
-        return new Stream(() => this);
-    };
 
     public get [Symbol.toStringTag](): string { return "HashSet"; }
 
@@ -492,10 +488,6 @@ export class TreeSet<T> extends SortedSet<T> {
                     yield value;
             }
         }());
-    }
-
-    public stream(): Stream<T> {
-        return new Stream(() => this);
     }
 
     public *[Symbol.iterator](): IterableIterator<T> {

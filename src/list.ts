@@ -1,6 +1,5 @@
 import { Deque, List, SortedList, SortedQueue, Stack, Collection } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
-import { Stream } from "./stream";
 import { None, Optional, Some } from "./optional";
 
 export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
@@ -22,14 +21,14 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
 
     public removeLast(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data.pop()!);
+            return Some.of(this.#data.pop()! as T);
         return None.of();
 
     }
 
     public remove(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data.shift()!);
+            return Some.of(this.#data.shift()! as T);
         return None.of();
 
     }
@@ -44,14 +43,14 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
 
     public first(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data[0]!);
+            return Some.of(this.#data[0]);
         return None.of();
 
     }
 
     public last(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data[this.#data.length - 1]!);
+            return Some.of(this.#data[this.#data.length - 1]);
         return None.of();
 
     }
@@ -73,7 +72,7 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
 
     public get(index: number): Optional<T> {
         if (index < this.#data.length && index >= 0)
-            return Some.of(this.#data[index]!);
+            return Some.of(this.#data[index]);
         return None.of();
     }
 
@@ -137,10 +136,6 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
         return new SortedArrayList(comparator, this);
     }
 
-    public stream(): Stream<T> {
-        return new Stream(() => this);
-    }
-
     [Symbol.iterator](): IterableIterator<T> {
         return this.#data.values();
     }
@@ -194,13 +189,13 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
 
     public removeLast(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data.pop()!);
+            return Some.of(this.#data.pop()! as T);
         return None.of();
     }
 
     public remove(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data.shift()!);
+            return Some.of(this.#data.shift()! as T);
         return None.of();
     }
 
@@ -210,13 +205,13 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
 
     public first(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data[0]!);
+            return Some.of(this.#data[0]);
         return None.of();
     }
 
     public last(): Optional<T> {
         if (this.#data.length > 0)
-            return Some.of(this.#data[this.#data.length - 1]!);
+            return Some.of(this.#data[this.#data.length - 1]);
         return None.of();
     }
 
@@ -255,7 +250,7 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
 
     public get(index: number): Optional<T> {
         if (index < this.#data.length && index >= 0)
-            return Some.of(this.#data[index]!);
+            return Some.of(this.#data[index]);
         return None.of();
     }
 
@@ -339,10 +334,6 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
                     yield value;
             }
         }());
-    }
-
-    public stream(): Stream<T> {
-        return new Stream(() => this);
     }
 
     [Symbol.iterator]() {
