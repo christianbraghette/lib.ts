@@ -9,10 +9,23 @@ import { IterableObject } from "./objects";
 import { None, Optional } from "./optional";
 import { StreamIterator } from "./stream";
 
+/**
+ * A binary heap that hands out its lowest element first. Iterating yields priority order without removing anything.
+ * @example
+ * const queue = new PriorityQueue(Comparator.natural<number>(), [5, 1, 4]);
+ * queue.first().orThrow(); // 1
+ * queue.remove().orThrow(); // 1
+ * queue.toArray(); // [4, 5]
+ */
 export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T> {
     #array = new ArrayList<T>();
     #compareFn: Comparator<T>;
 
+    /**
+     * Creates a priority queue.
+     * @param compareFn Defines the priority. The lowest element comes first.
+     * @param iterable The initial elements. Defaults to an empty queue.
+     */
     constructor(compareFn: Comparator<T>, iterable?: Iterable<T>) {
         super();
         this.#compareFn = compareFn;
@@ -20,6 +33,7 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
             this.add(data);
     }
 
+    /** Returns the comparator that defines this queue's priority. */
     public comparator(): Comparator<T> {
         return this.#compareFn;
     };
@@ -125,6 +139,7 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
         };
     }
 
+    /** Copies the elements into a new array, in priority order. */
     public toArray(): T[] {
         return Array.from(this);
     }

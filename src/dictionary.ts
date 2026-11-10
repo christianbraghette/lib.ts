@@ -5,12 +5,25 @@
 import { isSome, Some } from "./optional";
 import { StreamIterator } from "./stream";
 
+/**
+ * A string-keyed object whose properties read as `Some<T> | undefined`, so a present value and a missing key stay distinct. Assigning a plain value wraps it in a Some, and any key name is allowed, including `constructor`.
+ * @example
+ * const config = Dictionary.of({ host: "localhost" });
+ * config.host?.value; // localhost
+ * config.missing; // undefined
+ * "host" in config; // true
+ * [...config]; // [["host", "localhost"]]
+ */
 export class Dictionary<T> {
     [key: string | number]: Some<T> | undefined;
 
     /** Has no prototype, so keys like `constructor` or `__proto__` are ordinary entries. */
     readonly #data: Record<string, Some<T>> = Object.create(null);
 
+    /**
+     * Creates a dictionary.
+     * @param iterable The initial `[key, value]` pairs. Keys are converted to strings.
+     */
     constructor(iterable?: Iterable<[keyof any, T]>) {
         for (const [key, value] of StreamIterator.from(iterable ?? []))
             this.#data[String(key)] = Some.of(value);
@@ -83,10 +96,18 @@ export class Dictionary<T> {
         return "Dictionary";
     }
 
+    /**
+     * Creates a dictionary from the properties of an object.
+     * @param obj The source object.
+     */
     public static of<S>(obj: Record<keyof any, S>): Dictionary<S> {
         return new Dictionary(Object.entries(obj));
     }
 
+    /**
+     * Creates a dictionary from an iterable of `[key, value]` pairs.
+     * @param iterable The initial entries. Keys are converted to strings.
+     */
     public static from<S>(iterable: Iterable<[keyof any, S]>): Dictionary<S> {
         return new Dictionary(iterable);
     }

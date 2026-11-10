@@ -18,7 +18,12 @@ export function registerStreamFactory(factory: StreamFactory): void {
     createStream = factory;
 }
 
+/** Base class for objects that can be iterated and turned into a stream. */
 export abstract class IterableObject<T, R = void> implements Iterable<T, R> {
+    /**
+     * Starts a new single-use stream over this object's elements.
+     * @returns A lazy StreamIterator.
+     */
     public iterator(): StreamIterator<T> {
         return createStream<T>(this[Symbol.iterator].bind(this) as Supplier<Iterable<T>>);
     }
@@ -26,7 +31,9 @@ export abstract class IterableObject<T, R = void> implements Iterable<T, R> {
     abstract [Symbol.iterator](): IterableIterator<T, R>;
 }
 
+/** An IterableObject that also supports `for await...of`. */
 export abstract class AsyncIterableObject<T, R = void> extends IterableObject<T, R> implements AsyncIterable<T, R> {
+    /** Returns an async iterator over the elements. */
     public asyncIterator() {
         return this[Symbol.asyncIterator]();
     }
@@ -34,7 +41,10 @@ export abstract class AsyncIterableObject<T, R = void> extends IterableObject<T,
     abstract [Symbol.asyncIterator](): AsyncIterableIterator<T, R>;
 }
 
+/** A container that can be transformed with `map` and `flatMap`. */
 export interface FunctionalObject {
+    /** Transforms each contained value. */
     map<S>(fn: Functional<any, S>): FunctionalObject;
+    /** Transforms each contained value and flattens any nested container. */
     flatMap<S>(fn: Functional<any, S | FunctionalObject>): FunctionalObject;
 }

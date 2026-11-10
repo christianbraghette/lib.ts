@@ -9,9 +9,21 @@ import { StreamIterator } from "./stream";
 import { NativeSet } from "./native";
 import { ArrayList } from "./list";
 
+/**
+ * A set backed by the native `Set`, iterating in insertion order.
+ * @example
+ * const a = HashSet.of(1, 2, 3);
+ * const b = HashSet.of(2, 3, 4);
+ * a.intersection(b).toArray(); // [2, 3]
+ * a.difference(b).toArray(); // [1]
+ */
 export class HashSet<T> extends Set<T> {
     #set: NativeSet<T>;
 
+    /**
+     * Creates a set.
+     * @param iterable The initial elements. Defaults to an empty set.
+     */
     constructor(iterable?: Iterable<T>) {
         super();
         this.#set = new NativeSet(iterable);
@@ -108,17 +120,37 @@ export class HashSet<T> extends Set<T> {
         return this.#set.values();
     }
 
+    /**
+     * Creates a set from an iterable.
+     * @param iterable The initial elements.
+     */
     public static from<S>(iterable: Iterable<S>): HashSet<S> {
         return new HashSet(iterable);
     }
 
+    /**
+     * Creates a set from its arguments.
+     * @param items The initial elements.
+     */
     public static of<S>(...items: S[]): HashSet<S> {
         return new HashSet(items);
     }
 }
 
+/**
+ * A HashSet where re-adding an item moves it to the end, so iteration runs from least to most recently added. There is no capacity limit or eviction.
+ * @example
+ * const recent = CacheSet.of("a", "b");
+ * recent.add("a"); // 0
+ * recent.toArray(); // ["b", "a"]
+ */
 export class CacheSet<T> extends HashSet<T> {
 
+    /**
+     * Adds the given items, moving any that already exist to the end.
+     * @param items The items to add.
+     * @returns How many items are new. Items that only moved are not counted.
+     */
     public override add(...items: T[]): number {
         const size = this.size;
         for (const item of items) {
@@ -153,10 +185,18 @@ export class CacheSet<T> extends HashSet<T> {
 
     public override get [Symbol.toStringTag](): string { return "CacheSet"; }
 
+    /**
+     * Creates a set from an iterable.
+     * @param iterable The initial elements.
+     */
     public static override from<S>(iterable: Iterable<S>): CacheSet<S> {
         return new CacheSet(iterable);
     }
 
+    /**
+     * Creates a set from its arguments.
+     * @param items The initial elements.
+     */
     public static override of<S>(...items: S[]): CacheSet<S> {
         return new CacheSet(items);
     }
@@ -168,12 +208,26 @@ class TreeNode<T> {
     public isLeaf: boolean = true;
 }
 
+/**
+ * A set kept in comparator order, backed by a B-tree. Elements the comparator treats as equal are duplicates.
+ * @example
+ * const set = TreeSet.of(Comparator.natural<number>(), 5, 1, 3, 9);
+ * set.first().orThrow(); // 1
+ * set.head(5).toArray(); // [1, 3]
+ * set.tail(5).toArray(); // [5, 9]
+ * set.slice(3, 9).toArray(); // [3, 5]
+ */
 export class TreeSet<T> extends SortedSet<T> {
     #size: number = 0;
     #root: TreeNode<T>;
     #compareFn: Comparator<T>;
     readonly #M = 4
 
+    /**
+     * Creates a sorted set.
+     * @param compareFn Defines the order and which elements count as duplicates.
+     * @param iterable The initial elements. Defaults to an empty set.
+     */
     constructor(compareFn: Comparator<T>, iterable?: Iterable<T>) {
         super();
         this.#compareFn = compareFn;
@@ -471,6 +525,11 @@ export class TreeSet<T> extends SortedSet<T> {
             consumer(item, index++, this);
     }
 
+    /**
+     * Builds a new collection from the result of calling a function on each element.
+     * @param fn Receives the element, its index and this set.
+     * @returns An unsorted list, because mapped values have no defined order and may repeat.
+     */
     public map<S>(fn: TriFunctional<T, number, this, S>): Collection<S> {
         const self = this;
         return new ArrayList<S>(function* () {
@@ -480,6 +539,11 @@ export class TreeSet<T> extends SortedSet<T> {
         }());
     }
 
+    /**
+     * Like `map`, but a returned Collection is flattened into the result.
+     * @param fn Returns either a single value or a Collection of values.
+     * @returns An unsorted list, because mapped values have no defined order and may repeat.
+     */
     public flatMap<S>(fn: TriFunctional<T, number, this, S | Collection<S>>): Collection<S> {
         const self = this;
         return new ArrayList<S>(function* () {
@@ -521,10 +585,20 @@ export class TreeSet<T> extends SortedSet<T> {
 
     public get [Symbol.toStringTag](): string { return "TreeSet"; }
 
+    /**
+     * Creates a sorted set from an iterable.
+     * @param compareFn Defines the order.
+     * @param iterable The initial elements.
+     */
     public static from<S>(compareFn: Comparator<S>, iterable: Iterable<S>): TreeSet<S> {
         return new TreeSet(compareFn, iterable);
     }
 
+    /**
+     * Creates a sorted set from its arguments.
+     * @param compareFn Defines the order.
+     * @param items The initial elements.
+     */
     public static of<S>(compareFn: Comparator<S>, ...items: S[]): TreeSet<S> {
         return new TreeSet(compareFn, items);
     }

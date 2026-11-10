@@ -6,9 +6,22 @@ import { Deque, List, SortedList, SortedQueue, Stack, Collection } from "./colle
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { None, Optional, Some } from "./optional";
 
+/**
+ * An array-backed list that also works as a deque and a stack.
+ * @example
+ * const list = ArrayList.of(1, 2, 3);
+ * list.add(4); // 1
+ * list.first().orThrow(); // 1
+ * list.removeLast().orThrow(); // 4
+ * list.get(9).isNone(); // true
+ */
 export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
     #data: T[];
 
+    /**
+     * Creates a list.
+     * @param iterable The initial elements. Defaults to an empty list.
+     */
     constructor(iterable?: Iterable<T>) {
         super();
         this.#data = iterable ? Array.from(iterable) : [];
@@ -147,19 +160,39 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
 
     get [Symbol.toStringTag](): string { return "ArrayList"; };
 
+    /**
+     * Creates a list from an iterable. Can be passed directly to `stream.collect`.
+     * @param iterable The initial elements.
+     */
     public static from<S>(iterable: Iterable<S>): ArrayList<S> {
         return new ArrayList(iterable);
     }
 
+    /**
+     * Creates a list from its arguments.
+     * @param items The initial elements.
+     */
     public static of<S>(...items: S[]): ArrayList<S> {
         return new ArrayList(items);
     }
 }
 
+/**
+ * An array-backed list kept in comparator order. Elements the comparator treats as equal keep their insertion order.
+ * @example
+ * const list = new SortedArrayList(Comparator.natural<number>(), [3, 1, 2]);
+ * list.add(0); // 1
+ * list.toArray(); // [0, 1, 2, 3]
+ */
 export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> {
     #compareFn: Comparator<T>;
     #data: T[] = [];
 
+    /**
+     * Creates a sorted list.
+     * @param compareFn Defines the order.
+     * @param iterable The initial elements. Defaults to an empty list.
+     */
     constructor(compareFn: Comparator<T>, iterable?: Iterable<T>) {
         super();
         this.#compareFn = compareFn;
@@ -204,6 +237,10 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
         return items.length;
     }
 
+    /**
+     * Removes the highest element.
+     * @returns The removed element, or None when the list is empty.
+     */
     public removeLast(): Optional<T> {
         if (this.#data.length > 0)
             return Some.of(this.#data.pop()! as T);
@@ -297,6 +334,11 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
             consumer(item, i++, this);
     };
 
+    /**
+     * Builds a new list from the result of calling a function on each element.
+     * @param fn Receives the element, its index and this list.
+     * @returns An unsorted ArrayList, because mapped values have no defined order.
+     */
     public map<S>(fn: TriFunctional<T, number, this, S>): ArrayList<S> {
         const self = this;
         let i = 0;
@@ -306,6 +348,11 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
         }());
     }
 
+    /**
+     * Like `map`, but a returned Collection is flattened into the result.
+     * @param fn Returns either a single value or a Collection of values.
+     * @returns An unsorted ArrayList, because mapped values have no defined order.
+     */
     public flatMap<S>(fn: TriFunctional<T, number, this, S | Collection<S>>): ArrayList<S> {
         const self = this;
         let i = 0;
