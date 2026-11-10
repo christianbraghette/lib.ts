@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { StreamIterator } from "./stream";
 import { NativeMap } from "./native";
@@ -73,7 +77,7 @@ export class HashMap<K, V> extends Map<K, V> {
     /**
      * Returns a specified element from the map.
      * @param key The key of the element to return.
-     * @returns The element associated with the specified key, or undefined if not found.
+     * @returns An Optional holding the element for the specified key, or None if not found.
      */
     public get(key: K): Optional<V> {
         if (!this.#map.has(key))
@@ -82,8 +86,8 @@ export class HashMap<K, V> extends Map<K, V> {
     }
 
     /**
-     * Returns a boolean indicating whether an element with the specified key exists or not.
-     * @param key The key to test for presence.
+     * Returns true when every specified key exists, and false when called with no keys.
+     * @param keys The keys to test for presence.
      */
     public has(...keys: K[]): boolean {
         if (keys.length === 0) return false;
@@ -94,9 +98,9 @@ export class HashMap<K, V> extends Map<K, V> {
     }
 
     /**
-     * Removes the specified element from the map.
-     * @param key The key of the element to remove.
-     * @returns true if the element existed and was removed; false otherwise.
+     * Removes the specified elements from the map.
+     * @param keys The keys of the elements to remove.
+     * @returns The number of elements that were removed.
      */
     public delete(...keys: K[]): number {
         const size = this.#map.size;

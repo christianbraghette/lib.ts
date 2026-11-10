@@ -22,42 +22,45 @@
     "type": "git",
     "url": "git+https://github.com/christianbraghette/lib.ts.git"
   },
-  "license": "Apache-2.0",
+  "license": "MPL-2.0",
   "author": "Christian Braghette",
   "type": "commonjs",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./collections": {
-      "import": "./dist/collections.js",
-      "require": "./dist/collections.js",
-      "types": "./dist/collections.d.ts"
+      "types": "./dist/collections.d.ts",
+      "default": "./dist/collections.js"
     },
     "./maps": {
-      "import": "./dist/maps.js",
-      "require": "./dist/maps.js",
-      "types": "./dist/maps.d.ts"
+      "types": "./dist/maps.d.ts",
+      "default": "./dist/maps.js"
     },
     "./stream": {
-      "import": "./dist/stream.js",
-      "require": "./dist/stream.js",
-      "types": "./dist/stream.d.ts"
+      "types": "./dist/stream.d.ts",
+      "default": "./dist/stream.js"
     },
     "./utils": {
-      "import": "./dist/utils.js",
-      "require": "./dist/utils.js",
-      "types": "./dist/utils.d.ts"
+      "types": "./dist/utils.d.ts",
+      "default": "./dist/utils.js"
     }
   },
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prepare": "npm run build",
     "pretest": "npm run build",
-    "test": "node ./dist/test.js",
-    "build": "npm run clean && tsc -b",
-    "clean": "if exist dir rmdir /s /q dist"
+    "test": "tsc -p tsconfig.test.json && node --test \".test-build/*.test.js\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^6.0.3"
   }
 }

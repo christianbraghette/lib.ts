@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { TriConsumer, TriFunctional } from "./functional";
 import { HashMap, Map } from "./map";
 import { Mutex, SemaphoreLock } from "./concurrence";
@@ -28,115 +32,54 @@ export class HashTable<K, V> {
         return this;
     }
 
-    public async add(...entries: [K, V][]): Promise<number> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().add(...entries);
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public add(...entries: [K, V][]): Promise<number> {
+        return this.#map.run(map => map.add(...entries));
     }
 
-    public async get(key: K): Promise<Optional<V>> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().get(key);
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public get(key: K): Promise<Optional<V>> {
+        return this.#map.run(map => map.get(key));
     }
 
-    public async has(...keys: K[]): Promise<boolean> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().has(...keys);
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public has(...keys: K[]): Promise<boolean> {
+        return this.#map.run(map => map.has(...keys));
     }
 
-    public async delete(...keys: K[]): Promise<number> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().delete(...keys);
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public delete(...keys: K[]): Promise<number> {
+        return this.#map.run(map => map.delete(...keys));
     }
 
-    public async clear(): Promise<void> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().clear();
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public clear(): Promise<void> {
+        return this.#map.run(map => map.clear());
     }
 
-    public async forEach(callbackfn: TriConsumer<V, K, this>): Promise<void> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().forEach((key, value) => callbackfn(key, value, this));
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public forEach(callbackfn: TriConsumer<V, K, this>): Promise<void> {
+        return this.#map.run(map => map.forEach((value, key) => callbackfn(value, key, this)));
     }
 
-    public async keys(): Promise<StreamIterator<K>> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().keys();
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    // keys, values and entries return snapshots, because the streams outlive the lock.
+
+    public keys(): Promise<StreamIterator<K>> {
+        return this.#map.run(map => StreamIterator.from(map.keys().toArray()));
     }
 
-    public async values(): Promise<StreamIterator<V>> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().values();
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public values(): Promise<StreamIterator<V>> {
+        return this.#map.run(map => StreamIterator.from(map.values().toArray()));
     }
 
-    public async entries(): Promise<StreamIterator<[K, V]>> {
-        const lock = await this.#map.acquire();
-        try {
-            return lock.get().entries();
-        } catch (error) {
-            throw error
-        } finally {
-            lock.release()
-        }
+    public entries(): Promise<StreamIterator<[K, V]>> {
+        return this.#map.run(map => StreamIterator.from(map.entries().toArray()));
     }
 
     public async *[Symbol.asyncIterator](): AsyncIterableIterator<[K, V]> {
         const lock = await this.#map.acquire();
         try {
             yield* lock.get();
-        } catch (error) {
-            throw error
         } finally {
             lock.release()
         }
     }
+
+    public get [Symbol.toStringTag](): string { return "HashTable"; }
 
     public static from<R, S>(iterable: Iterable<[R, S]>): HashTable<R, S> {
         return new HashTable(iterable);

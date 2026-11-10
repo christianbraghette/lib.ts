@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Predicate, Supplier, Functional, Executor, Consumer } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
 import { Err, Ok, Result } from "./result";
@@ -31,7 +35,7 @@ class Finalizer {
     }
 }
 
-interface OptionalMatcher<T, R> {
+export interface OptionalMatcher<T, R> {
     some: (value: T) => R;
     none: () => R;
 }
@@ -40,7 +44,8 @@ export abstract class Optional<T> extends IterableObject<T> implements Functiona
     public abstract isSome(): this is Some<T>;
     public abstract isNone(): this is None<T>;
 
-    public abstract then(fn: Consumer<T>): Finalizer;
+    /** Runs `fn` when a value is present. Deliberately not named `then`, which would make Optional a thenable. */
+    public abstract ifSome(fn: Consumer<T>): Finalizer;
 
     public abstract orElse(defaultValue: T): T;
     public abstract orGet(supplier: Supplier<T>): T;
@@ -95,7 +100,7 @@ export class Some<T> extends Optional<T> {
         return this.#value;
     }
 
-    public override then(fn: Consumer<T>) {
+    public override ifSome(fn: Consumer<T>) {
         fn(this.#value);
         return Finalizer.of();
     }
@@ -160,7 +165,7 @@ export class None<T = never> extends Optional<T> {
         return true;
     }
 
-    public override then(_fn: Consumer<T>) {
+    public override ifSome(_fn: Consumer<T>) {
         return Finalizer.of();
     }
 

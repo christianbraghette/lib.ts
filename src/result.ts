@@ -1,4 +1,8 @@
-import { Consumer, Executor, Predicate, Supplier, Functional, Thrower } from "./functional";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+import { Consumer, Executor, Predicate, Supplier, Functional } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
 import { None, Optional, Some } from "./optional";
 
@@ -75,11 +79,25 @@ export abstract class Result<T, E extends Error> extends IterableObject<T> imple
     public get [Symbol.toStringTag](): string { return "Result"; }
 }
 export namespace Result {
-    export function ofThrowable<M extends Error, S = never>(thrower: Thrower<M>): Result<S, M> {
+    function toError<E extends Error>(thrown: unknown): E {
+        return (thrown instanceof Error ? thrown : new Error(String(thrown))) as E;
+    }
+
+    /** Runs `supplier` and captures its return value in an Ok, or anything it throws in an Err. */
+    export function ofThrowable<T, E extends Error = Error>(supplier: Supplier<T>): Result<T, E> {
         try {
-            return new Ok(thrower()) as any;
+            return new Ok<T, E>(supplier());
         } catch (e) {
-            return new Err(e instanceof Error ? e : new Error(String(e))) as Err<M, S>;
+            return new Err<E, T>(toError<E>(e));
+        }
+    }
+
+    /** Waits for `promise` and captures its value in an Ok, or its rejection in an Err. */
+    export async function ofPromise<T, E extends Error = Error>(promise: PromiseLike<T>): Promise<Result<T, E>> {
+        try {
+            return new Ok<T, E>(await promise);
+        } catch (e) {
+            return new Err<E, T>(toError<E>(e));
         }
     }
 

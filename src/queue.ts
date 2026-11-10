@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Collection, Queue, SortedQueue } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { ArrayList } from "./list";
@@ -210,4 +214,6 @@ export class PriorityQueue<T> extends IterableObject<T> implements SortedQueue<T
             }
         }
     }
+
+    get [Symbol.toStringTag](): string { return "PriorityQueue"; }
 }

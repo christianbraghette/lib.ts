@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Consumer, Executor, Supplier } from "./functional";
 
 type RejectReason = 'reset' | 'error' | 'timeout';
@@ -53,8 +57,10 @@ class SemaphoreQueue<T> {
         if (!this.#head)
             return false;
         if (this.#head === node) {
-            this.#head = undefined;
-            this.#tail = undefined;
+            this.#head = node.next;
+            if (!this.#head)
+                this.#tail = undefined;
+            this.#size--;
             return true;
         }
         for (let iter: QueueNode<T> | undefined = this.#head; !!iter; iter = iter.next)
@@ -73,6 +79,8 @@ export class Semaphore<T> {
     #supplier: Supplier<T>;
     #count: number;
     #maxCount: number;
+    /** Bumped by releaseAll and rejectAll, so locks taken before a reset cannot release permits after it. */
+    #epoch: number = 0;
     readonly #queue = new SemaphoreQueue<T>();
 
     public constructor(supplier: Supplier<T>, maxCount: number) {
@@ -97,30 +105,42 @@ export class Semaphore<T> {
         return this.#queue.size;
     }
 
-    readonly #resolver = () => {
+    #createLock(): SemaphoreLock<T> {
+        const epoch = this.#epoch;
+        return new LockConstructor(this.#supplier(), () => this.#release(epoch));
+    }
+
+    #release(epoch: number): void {
+        if (epoch !== this.#epoch)
+            return;
         if (this.#count++ < 0)
-            this.#queue.remove()?.resolve(new LockConstructor(this.#supplier(), this.#resolver));
+            this.#queue.remove()?.resolve(this.#createLock());
     }
 
     public acquire(timeoutMs?: number): Promise<SemaphoreLock<T>> {
         if (this.#count > 0) {
             this.#count--;
-            return Promise.resolve<SemaphoreLock<T>>(new LockConstructor(this.#supplier(), this.#resolver));
+            return Promise.resolve(this.#createLock());
         }
         return new Promise((resolve, reject) => {
             this.#count--;
 
-            let timeout: number;
+            let timeout: ReturnType<typeof setTimeout> | undefined;
 
-            const entry = new QueueNode((lock: SemaphoreLock<T>) => {
+            const entry = new QueueNode<T>((lock) => {
                 clearTimeout(timeout);
                 resolve(lock);
-            }, reject);
+            }, (reason) => {
+                clearTimeout(timeout);
+                reject(reason);
+            });
 
             if (timeoutMs)
                 timeout = setTimeout(() => {
-                    this.#queue.delete(entry);
-                    reject('timeout');
+                    if (this.#queue.delete(entry)) {
+                        this.#count++;
+                        reject('timeout');
+                    }
                 }, timeoutMs)
 
             this.#queue.add(entry);
@@ -130,29 +150,30 @@ export class Semaphore<T> {
     public tryAcquire(): SemaphoreLock<T> | undefined {
         if (this.#count > 0) {
             this.#count--;
-            return new LockConstructor(this.#supplier(), this.#resolver);
+            return this.#createLock();
         }
         return;
     }
 
     public releaseAll(): void {
+        this.#epoch++;
         for (let node = this.#queue.remove(); !!node; node = this.#queue.remove())
             node?.resolve(LockConstructor.released(this.#supplier()));
         this.#count = this.#maxCount;
     }
 
     public rejectAll(): void {
+        this.#epoch++;
         for (let node = this.#queue.remove(); !!node; node = this.#queue.remove())
             node?.reject('reset');
         this.#count = this.#maxCount;
     }
 
-    public async run(callbackFn: (obj: T, release: Executor) => void, ms?: number): Promise<void> {
+    /** Runs the callback while holding a lock, including until an async callback settles. */
+    public async run<R>(callbackFn: (obj: T, release: Executor) => R | Promise<R>, ms?: number): Promise<R> {
         const lock = await this.acquire(ms);
         try {
-            return callbackFn(this.#supplier(), lock.release);
-        } catch (error) {
-            throw error;
+            return await callbackFn(lock.get(), lock.release);
         } finally {
             lock.release();
         }

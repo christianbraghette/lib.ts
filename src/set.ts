@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Set, SortedSet, Collection } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { None, Optional, Some } from "./optional";
@@ -139,7 +143,7 @@ export class CacheSet<T> extends HashSet<T> {
             let i = 0;
             for (const item of self.iterator()) {
                 const result = fn(item, i++, self);
-                if (result instanceof Set)
+                if (result instanceof Collection)
                     yield* result.iterator();
                 else
                     yield result;

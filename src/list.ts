@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Deque, List, SortedList, SortedQueue, Stack, Collection } from "./collections";
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { None, Optional, Some } from "./optional";
@@ -34,7 +38,8 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
     }
 
     public addFirst(...items: T[]): number {
-        return this.#data.unshift(...items);
+        this.#data.unshift(...items);
+        return items.length;
     }
 
     public clear(): void {
@@ -80,7 +85,7 @@ export class ArrayList<T> extends List<T> implements Deque<T>, Stack<T> {
         return this.#data.indexOf(searchElement, fromIndex);
     }
 
-    public lastIndexOf(searchElement: T, fromIndex: number = 0): number {
+    public lastIndexOf(searchElement: T, fromIndex: number = this.#data.length - 1): number {
         return this.#data.lastIndexOf(searchElement, fromIndex);
     }
 
@@ -160,31 +165,43 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
         this.#compareFn = compareFn;
 
         if (iterable)
-            for (const item of iterable)
-                this.add(item);
+            this.#data = Array.from(iterable).sort(compareFn);
     }
 
     get size(): number {
         return this.#data.length;
     }
 
-    public add(...items: T[]): number {
-        let count = 0;
-
-        for (const item of items) {
-            let low = 0, high = this.#data.length;
-            while (low < high) {
-                let mid = (low + high) >>> 1;
-                if (this.#compareFn(this.#data[mid], item) < 0)
-                    low = mid + 1;
-                else
-                    high = mid;
-            }
-            this.#data.splice(low, 0, item);
-            count++;
+    /** First index in `[from, size]` whose element is not ordered before `item`. */
+    #lowerBound(item: T, from: number = 0): number {
+        let low = from, high = this.#data.length;
+        while (low < high) {
+            const mid = (low + high) >>> 1;
+            if (this.#compareFn(this.#data[mid], item) < 0)
+                low = mid + 1;
+            else
+                high = mid;
         }
+        return low;
+    }
 
-        return count;
+    /** First index in `[0, to]` whose element is ordered after `item`. */
+    #upperBound(item: T, to: number = this.#data.length): number {
+        let low = 0, high = to;
+        while (low < high) {
+            const mid = (low + high) >>> 1;
+            if (this.#compareFn(this.#data[mid], item) <= 0)
+                low = mid + 1;
+            else
+                high = mid;
+        }
+        return low;
+    }
+
+    public add(...items: T[]): number {
+        for (const item of items)
+            this.#data.splice(this.#upperBound(item), 0, item);
+        return items.length;
     }
 
     public removeLast(): Optional<T> {
@@ -216,34 +233,15 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
     }
 
     public has(...items: T[]): boolean {
-        for (const item of items) {
-            let low = 0, high = this.#data.length;
-            while (low < high) {
-                let mid = (low + high) >>> 1;
-                if (this.#compareFn(this.#data[mid], item) < 0)
-                    low = mid + 1;
-                else
-                    high = mid;
-            }
-            if (this.#data[low] !== item)
-                return false;
-        }
-        return items.length > 0;
+        return items.length > 0 && items.every(item => this.indexOf(item) !== -1);
     }
 
     public delete(...items: T[]): number {
         const length = this.#data.length;
         for (const item of items) {
-            let low = 0, high = this.#data.length;
-            while (low < high) {
-                let mid = (low + high) >>> 1;
-                if (this.#compareFn(this.#data[mid], item) < 0)
-                    low = mid + 1;
-                else
-                    high = mid;
-            }
-            if (this.#data[low] === item)
-                this.#data.splice(low, 1);
+            const index = this.indexOf(item);
+            if (index !== -1)
+                this.#data.splice(index, 1);
         }
         return length - this.#data.length;
     }
@@ -255,35 +253,21 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
     }
 
     public indexOf(searchElement: T, fromIndex: number = 0): number {
-        let low = Math.max(0, fromIndex), high = this.#data.length;
-        while (low < high) {
-            let mid = (low + high) >>> 1;
-            if (this.#compareFn(this.#data[mid], searchElement) < 0)
-                low = mid + 1;
-            else
-                high = mid;
+        // Elements the comparator treats as equal can still be different values, so scan the whole run.
+        for (let i = this.#lowerBound(searchElement, Math.max(0, fromIndex)); i < this.#data.length; i++) {
+            if (this.#compareFn(this.#data[i], searchElement) !== 0) break;
+            if (this.#data[i] === searchElement) return i;
         }
-
-        if (low < this.#data.length && this.#compareFn(this.#data[low], searchElement) === 0 && this.#data[low] === searchElement)
-            return low;
         return -1;
     }
 
     public lastIndexOf(searchElement: T, fromIndex: number = this.#data.length - 1): number {
-        if (this.#data.length === 0 || fromIndex < 0) return -1;
-        
-        let low = 0, high = Math.min(this.#data.length, fromIndex + 1);
-        while (low < high) {
-            let mid = (low + high) >>> 1;
-            if (this.#compareFn(this.#data[mid], searchElement) <= 0)
-                low = mid + 1;
-            else
-                high = mid;
+        if (fromIndex < 0) return -1;
+
+        for (let i = this.#upperBound(searchElement, Math.min(this.#data.length, fromIndex + 1)) - 1; i >= 0; i--) {
+            if (this.#compareFn(this.#data[i], searchElement) !== 0) break;
+            if (this.#data[i] === searchElement) return i;
         }
-        
-        const targetIndex = low - 1;
-        if (targetIndex >= 0 && this.#compareFn(this.#data[targetIndex], searchElement) === 0 && this.#data[targetIndex] === searchElement)
-            return targetIndex;
         return -1;
     }
 
@@ -339,4 +323,6 @@ export class SortedArrayList<T> extends SortedList<T> implements SortedQueue<T> 
     [Symbol.iterator]() {
         return this.#data.values();
     }
+
+    get [Symbol.toStringTag](): string { return "SortedArrayList"; }
 }

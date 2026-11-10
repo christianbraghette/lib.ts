@@ -1,10 +1,14 @@
-import { Collection, Stack } from "./collections";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+import type { Collection } from "./collections";
 import { Dictionary } from "./dictionary";
 import { BiConsumer, BiFunctional, BiPredicate, Comparator, Executor, Functional, Supplier, TriFunctional, UnaryOperator } from "./functional";
 import { ArrayList, SortedArrayList } from "./list";
 import { CacheMap, HashMap, TreeMap } from "./map";
-import { AsyncIterableObject, FunctionalObject } from "./objects";
-import { Optional, Some, isSome } from "./optional";
+import { AsyncIterableObject, FunctionalObject, registerStreamFactory } from "./objects";
+import type { Optional, Some } from "./optional";
 import { PriorityQueue } from "./queue";
 import { CacheSet, HashSet, TreeSet } from "./set";
 
@@ -63,6 +67,35 @@ class StreamLockedError extends Error {
     }
 }
 
+/**
+ * Wraps an iterable so it can be read repeatedly. Values are pulled from the source once, on
+ * demand, so partial and interleaved reads all see the same sequence.
+ */
+function replay<T>(source: Iterable<T>): Supplier<Iterable<T>> {
+    const buffer: T[] = [];
+    let iterator: Iterator<T> | undefined;
+    let done = false;
+
+    return function* () {
+        for (let i = 0; ; i++) {
+            if (i < buffer.length) {
+                yield buffer[i];
+                continue;
+            }
+            if (done) return;
+
+            iterator ??= source[Symbol.iterator]();
+            const next = iterator.next();
+            if (next.done) {
+                done = true;
+                return;
+            }
+            buffer.push(next.value);
+            yield next.value;
+        }
+    };
+}
+
 class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalObject {
     #source: Supplier<Iterable<T>>;
     #locked = false;
@@ -90,12 +123,13 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
         const source = this.#lock();
         return new StreamIterator(
             function* () {
+                if (count <= 0) return;
                 let i = 0;
                 for (const val of source) {
-                    if (i >= count + offset) break;
                     if (i >= offset)
                         yield val;
-                    i++;
+                    // Stop right after the last value, so the source is not pulled once more.
+                    if (++i >= count + offset) break;
                 }
             }
         );
@@ -116,17 +150,7 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
     }
 
     public limit(count: number): StreamIterator<T> {
-        const source = this.#lock();
-        return new StreamIterator(
-            function* () {
-                let i = 0;
-                for (const val of source) {
-                    if (i >= count) break;
-                    yield val;
-                    i++;
-                }
-            }
-        );
+        return this.take(count);
     }
 
     public while(predicate: BiPredicate<T, number>): StreamIterator<T> {
@@ -251,58 +275,32 @@ class StreamConstructor<T> extends AsyncIterableObject<T> implements FunctionalO
     public sort(compareFn: Comparator<T>): StreamIterator<T> {
         const source = this.#lock();
         return new StreamIterator(function* () {
-            yield* new SortedArrayList(compareFn, source);
+            yield* Array.from(source).sort(compareFn);
         })
     }
 
     public reverse(): BufferedStream<T> {
         const source = this.#lock();
-        let buffer: Stack<T> | undefined;
+        let reversed: T[] | undefined;
         return new BufferedStream(function* () {
-            if (!buffer) {
-                buffer = new ArrayList<T>();
-                const aux: Stack<T> = new ArrayList(source);
-                let item: Optional<T>
-                while (isSome(item = aux.removeLast())) {
-                    buffer.add(item.value);
-                    yield item.value;
-                }
-            }
-            yield* buffer;
+            yield* (reversed ??= Array.from(source).reverse());
         });
     }
 
     public distinct(): BufferedStream<T> {
         const source = this.#lock();
-        const set = new HashSet<T>();
-        let loaded = false;
-        return new BufferedStream(function* () {
-            if (!loaded)
-                for (const value of source) {
-                    if (set.has(value)) continue;
-                    set.add(value);
-                    yield value;
-                }
-            else
-                yield* set;
-        });
+        return new BufferedStream(replay(function* () {
+            const seen = new Set<T>();
+            for (const value of source) {
+                if (seen.has(value)) continue;
+                seen.add(value);
+                yield value;
+            }
+        }()));
     }
 
     public buffer(): BufferedStream<T> {
-        const source = this.#lock();
-        const buffer = new ArrayList<T>();
-        let loaded = false;
-        return new BufferedStream(function* () {
-            if (!loaded) {
-                for (const value of source) {
-                    buffer.add(value);
-                    yield value;
-                }
-                loaded = true;
-                return;
-            }
-            yield* buffer;
-        });
+        return new BufferedStream(replay(this.#lock()));
     }
 
     public iterator(): StreamIterator<T> {
@@ -506,3 +504,5 @@ class BufferedStream<T> extends StreamConstructor<T> {
         return new StreamIterator(() => this.sink())
     }
 }
+
+registerStreamFactory(source => new StreamIterator(source));

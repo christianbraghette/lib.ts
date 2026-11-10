@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { Comparator, TriConsumer, TriFunctional } from "./functional";
 import { FunctionalObject, IterableObject } from "./objects";
 import { Optional } from "./optional";
@@ -82,3 +86,5 @@ export abstract class SortedSet<T> extends Set<T> {
 export * from "./list";
 export * from "./queue";
 export * from "./set";
+
+import "./stream";

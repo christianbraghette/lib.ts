@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 import { FunctionalObject } from "./objects";
 import { Throwable } from "./result";
 import { StreamIterator } from "./stream";
@@ -40,7 +44,7 @@ export namespace Predicate {
     }
 
     export function isFalse(): Predicate<boolean> {
-        return (value: boolean) => value === true;
+        return (value: boolean) => value === false;
     }
 
     export function isNullish<T>(): Predicate<T | null | undefined> {
@@ -223,14 +227,11 @@ export interface Pipeline<T, R> {
 export class Pipeline<T, R> implements Functional<T, R>, FunctionalObject {
 
     constructor(...funcs: Functional<any, any>[]) {
-        let source: Functional<any, any> | undefined = undefined;
-        for (const functional of funcs)
-            if (!source)
-                source = functional;
-            else
-                source = Functional.compose(source, functional);
-        if (!source)
+        if (funcs.length === 0)
             throw new Error("Empty Pipeline");
+
+        // A fresh function, because the prototype and seal below must not touch the caller's functions.
+        const source: Functional<any, any> = (value: any) => funcs.reduce((result, fn) => fn(result), value);
 
         Object.defineProperty(source, "name", { get: () => "Pipeline" });
         const obj = Object.assign(source as Functional<T, R>, this);
