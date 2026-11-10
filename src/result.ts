@@ -77,7 +77,7 @@ export abstract class Result<T, E extends Error> extends IterableObject<T> imple
 export namespace Result {
     export function ofThrowable<M extends Error, S = never>(thrower: Thrower<M>): Result<S, M> {
         try {
-            return new Ok(thrower());
+            return new Ok(thrower()) as any;
         } catch (e) {
             return new Err(e instanceof Error ? e : new Error(String(e))) as Err<M, S>;
         }
